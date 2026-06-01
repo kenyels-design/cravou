@@ -1,0 +1,78 @@
+export interface UserProfile {
+  id: string;
+  nome: string | null;
+  departamento: string | null;
+  pontos_totais: number | null;
+}
+
+export type MatchStatus =
+  | 'pendente'
+  | 'ao_vivo'
+  | 'finalizado'
+  | 'aguardando_resultado'
+  | 'agendado';
+
+export interface MatchRecord {
+  id: number;
+  time_a: string;
+  time_b: string;
+  flag_a: string | null;
+  flag_b: string | null;
+  data_hora: string;
+  status: MatchStatus;
+  fase: string;
+  gols_a?: number | null;
+  gols_b?: number | null;
+}
+
+export interface PredictionRecord {
+  match_id: number;
+  palpite_a: number;
+  palpite_b: number;
+}
+
+export interface TeamRecord {
+  id: number;
+  name: string;
+  fifa_code: string | null;
+  flag_emoji: string | null;
+  is_active: boolean;
+  display_order: number;
+}
+
+export interface Top3PredictionRecord {
+  id: number;
+  user_id: string;
+  champion_team_id: number;
+  vice_team_id: number;
+  third_place_team_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface FinalResultRecord {
+  id: boolean;
+  champion_team_id: number | null;
+  vice_team_id: number | null;
+  third_place_team_id: number | null;
+  updated_at: string;
+  updated_by: string | null;
+}
+
+export interface Top3SettingsRecord {
+  setting_key: string;
+  setting_value_text: string | null;
+}
+
+export interface Top3Selection {
+  championTeamId: string;
+  viceTeamId: string;
+  thirdPlaceTeamId: string;
+}
+
+export const FUTURE_TOP3_SCORING_RULES = [
+  'Campeao certo: 10 pontos',
+  'Vice-campeao certo: 7 pontos',
+  'Terceiro lugar certo: 5 pontos',
+  'Selecao no Top 3 em posicao errada: 3 pontos',
+] as const;
