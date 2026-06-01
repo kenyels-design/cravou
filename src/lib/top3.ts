@@ -1,4 +1,4 @@
-import { supabaseCravou } from './supabaseClient';
+import { supabase } from './supabaseClient';
 import type {
   FinalResultRecord,
   TeamRecord,
@@ -36,18 +36,20 @@ export function getTop3DuplicateError(selection: Top3Selection) {
 export async function fetchTop3BetPage(userId: string) {
   const [{ data: teams, error: teamsError }, { data: prediction, error: predictionError }, { data: settings, error: settingsError }] =
     await Promise.all([
-      supabaseCravou
+      supabase
+        .schema('cravou')
         .from('teams')
         .select('id, name, fifa_code, flag_emoji, is_active, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true })
         .order('name', { ascending: true }),
-      supabaseCravou
+      supabase
+        .schema('cravou')
         .from('top3_predictions')
         .select('id, user_id, champion_team_id, vice_team_id, third_place_team_id, created_at, updated_at')
         .eq('user_id', userId)
         .maybeSingle(),
-      supabaseCravou.from('settings').select('setting_key, setting_value_text').eq('setting_key', LOCK_SETTING_KEY),
+      supabase.schema('cravou').from('settings').select('setting_key, setting_value_text').eq('setting_key', LOCK_SETTING_KEY),
     ]);
 
   if (teamsError) {
@@ -86,7 +88,8 @@ export async function saveTop3Prediction(userId: string, selection: Top3Selectio
     third_place_team_id: Number(selection.thirdPlaceTeamId),
   };
 
-  const { data, error } = await supabaseCravou
+  const { data, error } = await supabase
+    .schema('cravou')
     .from('top3_predictions')
     .upsert(payload, {
       onConflict: 'user_id',
@@ -104,17 +107,19 @@ export async function saveTop3Prediction(userId: string, selection: Top3Selectio
 export async function fetchTop3ResultPage() {
   const [{ data: teams, error: teamsError }, { data: result, error: resultError }, { data: settings, error: settingsError }] =
     await Promise.all([
-      supabaseCravou
+      supabase
+        .schema('cravou')
         .from('teams')
         .select('id, name, fifa_code, flag_emoji, is_active, display_order')
         .eq('is_active', true)
         .order('display_order', { ascending: true })
         .order('name', { ascending: true }),
-      supabaseCravou
+      supabase
+        .schema('cravou')
         .from('final_result')
         .select('id, champion_team_id, vice_team_id, third_place_team_id, updated_at, updated_by')
         .maybeSingle(),
-      supabaseCravou.from('settings').select('setting_key, setting_value_text').eq('setting_key', LOCK_SETTING_KEY),
+      supabase.schema('cravou').from('settings').select('setting_key, setting_value_text').eq('setting_key', LOCK_SETTING_KEY),
     ]);
 
   if (teamsError) {

@@ -76,3 +76,47 @@ export const FUTURE_TOP3_SCORING_RULES = [
   'Terceiro lugar certo: 5 pontos',
   'Selecao no Top 3 em posicao errada: 3 pontos',
 ] as const;
+
+export type Sprint3MatchStatus =
+  | 'pendente'
+  | 'ao_vivo'
+  | 'finalizado'
+  | 'aguardando_resultado';
+
+export interface Sprint3MatchRecord {
+  id: string;
+  home_team: string;
+  away_team: string;
+  home_flag: string | null;
+  away_flag: string | null;
+  match_time: string;
+  round: string;
+  group_name: string | null;
+  status: Sprint3MatchStatus;
+  home_score: number | null;
+  away_score: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Sprint3PredictionRecord {
+  id: string;
+  user_id: string;
+  match_id: string;
+  home_score: number;
+  away_score: number;
+  points: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Sprint3PredictionWithMatchRecord extends Sprint3PredictionRecord {
+  matches: Sprint3MatchRecord;
+}
+
+export interface Sprint3LeaderboardEntry {
+  user_id: string;
+  nome: string;
+  departamento: string | null;
+  total_points: number;
+}

@@ -8,9 +8,3 @@ if (!supabaseUrl || !supabaseAnonKey) {
 }
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-export const supabaseCravou = createClient(supabaseUrl, supabaseAnonKey, {
-  db: {
-    schema: 'cravou',
-  },
-});

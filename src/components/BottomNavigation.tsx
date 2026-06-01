@@ -3,8 +3,9 @@ interface BottomNavigationProps {
 }
 
 const navItems = [
-  { hash: '#aposta', label: 'Minha Aposta', icon: 'A' },
-  { hash: '#resultado', label: 'Resultado', icon: 'R' },
+  { hash: '#jogos', label: 'Jogos', icon: 'J' },
+  { hash: '#meus-palpites', label: 'Meus Palpites', icon: 'M' },
+  { hash: '#ranking', label: 'Ranking', icon: 'R' },
   { hash: '#perfil', label: 'Perfil', icon: 'P' },
 ];
 
@@ -12,7 +13,7 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
   return (
     <nav
       aria-label="Navegacao principal"
-      className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-lg -translate-x-1/2 items-center justify-between rounded-pill border border-white/10 bg-black/35 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
+      className="fixed bottom-4 left-1/2 z-50 flex w-[calc(100%-2rem)] max-w-5xl -translate-x-1/2 items-center justify-between gap-2 rounded-pill border border-white/10 bg-black/35 p-2 shadow-[0_24px_60px_rgba(0,0,0,0.45)] backdrop-blur-2xl"
     >
       {navItems.map((item) => {
         const isActive = currentRoute === item.hash;
@@ -21,7 +22,7 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
           <a
             aria-current={isActive ? 'page' : undefined}
             className={[
-              'flex min-h-11 min-w-[104px] flex-1 items-center justify-center gap-2 rounded-pill px-4 py-3 text-xs font-semibold uppercase tracking-[0.14em] transition',
+              'flex min-h-11 min-w-[84px] flex-1 items-center justify-center gap-2 rounded-pill px-3 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] transition',
               'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/70',
               isActive
                 ? 'bg-primary text-black shadow-glow-primary'

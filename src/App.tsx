@@ -3,17 +3,19 @@ import { AuthProvider, useAuth } from './context/AuthContext';
 import { ToastProvider } from './context/ToastContext';
 import BottomNavigation from './components/BottomNavigation';
 import ProtectedRoute from './routes/ProtectedRoute';
+import Admin from './views/Admin';
 import ForgotPassword from './views/ForgotPassword';
 import Login from './views/Login';
-import MyBet from './views/MyBet';
+import Matches from './views/Matches';
+import MyPredictions from './views/MyPredictions';
 import Profile from './views/Profile';
+import Ranking from './views/Ranking';
 import Register from './views/Register';
 import ResetPassword from './views/ResetPassword';
-import Result from './views/Result';
 
 type PublicRoute = '#login' | '#cadastro' | '#esqueci';
-type ProtectedRouteHash = '#aposta' | '#resultado' | '#perfil';
-type LegacyRoute = '#dashboard' | '#ranking' | '#admin';
+type ProtectedRouteHash = '#jogos' | '#meus-palpites' | '#ranking' | '#perfil' | '#admin';
+type LegacyRoute = '#dashboard' | '#palpites' | '#aposta' | '#resultado';
 type Route = PublicRoute | ProtectedRouteHash | LegacyRoute;
 
 function resolveRoute(): Route {
@@ -28,12 +30,15 @@ function resolveRoute(): Route {
       '#login',
       '#cadastro',
       '#esqueci',
+      '#jogos',
+      '#meus-palpites',
+      '#ranking',
+      '#perfil',
+      '#admin',
+      '#palpites',
       '#aposta',
       '#resultado',
-      '#perfil',
       '#dashboard',
-      '#ranking',
-      '#admin',
     ].includes(hash)
   ) {
     return hash;
@@ -43,12 +48,12 @@ function resolveRoute(): Route {
 }
 
 function normalizeRoute(route: Route): PublicRoute | ProtectedRouteHash {
-  if (route === '#dashboard' || route === '#admin') {
-    return '#aposta';
+  if (route === '#dashboard' || route === '#aposta' || route === '#resultado') {
+    return '#jogos';
   }
 
-  if (route === '#ranking') {
-    return '#resultado';
+  if (route === '#palpites') {
+    return '#meus-palpites';
   }
 
   return route;
@@ -89,11 +94,11 @@ function AppRouter() {
     }
 
     if (user && profile && ['#login', '#cadastro', '#esqueci'].includes(normalizedRoute)) {
-      window.location.hash = '#aposta';
+      window.location.hash = '#jogos';
       return;
     }
 
-    if (!user && ['#aposta', '#resultado', '#perfil'].includes(normalizedRoute)) {
+    if (!user && ['#jogos', '#meus-palpites', '#ranking', '#perfil', '#admin'].includes(normalizedRoute)) {
       window.location.hash = '#login';
     }
   }, [authLoading, normalizedRoute, profile, profileLoading, user]);
@@ -132,9 +137,11 @@ function AppRouter() {
   return (
     <ProtectedRoute>
       <div className="min-h-screen bg-background text-white">
-        {normalizedRoute === '#aposta' ? <MyBet /> : null}
-        {normalizedRoute === '#resultado' ? <Result /> : null}
+        {normalizedRoute === '#jogos' ? <Matches /> : null}
+        {normalizedRoute === '#meus-palpites' ? <MyPredictions /> : null}
+        {normalizedRoute === '#ranking' ? <Ranking /> : null}
         {normalizedRoute === '#perfil' ? <Profile /> : null}
+        {normalizedRoute === '#admin' ? <Admin /> : null}
         <BottomNavigation currentRoute={normalizedRoute} />
       </div>
     </ProtectedRoute>
