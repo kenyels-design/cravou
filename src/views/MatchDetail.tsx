@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAuth } from '../context/AuthContext';
-import { formatMatchKickoff, getFlagLabel } from '../lib/display';
+import { formatMatchKickoff, getFlagCode } from '../lib/display';
 import { getMatches, getMyPredictions, upsertPrediction } from '../lib/matches';
 import type { Sprint3MatchRecord, Sprint3PredictionRecord } from '../lib/types';
 
@@ -11,15 +11,19 @@ interface MatchDetailProps {
 }
 
 function renderFlag(flag: string | null, fallback: string) {
-  if (flag && /^https?:\/\//i.test(flag)) {
-    return <img alt="" className="h-20 w-20 rounded-full object-cover shadow-[0_0_40px_rgba(255,255,255,0.08)]" src={flag} />;
+  const code = getFlagCode(flag);
+
+  if (code) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`fi fi-${code} rounded-full`}
+        style={{ width: 48, height: 48, display: 'inline-block' }}
+      />
+    );
   }
 
-  return (
-    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#2A2A2A] text-3xl font-bold text-white">
-      {getFlagLabel(flag, fallback)}
-    </div>
-  );
+  return <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2A2A2A] text-base font-bold text-white">{fallback}</div>;
 }
 
 function initials(name: string) {

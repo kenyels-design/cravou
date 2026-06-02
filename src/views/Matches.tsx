@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import QuickBetMode from '../components/QuickBetMode';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAuth } from '../context/AuthContext';
-import { formatMatchKickoff, formatMatchKickoffTime, getFlagLabel } from '../lib/display';
+import { formatMatchKickoff, formatMatchKickoffTime, getFlagCode } from '../lib/display';
 import { getMatches, getMyPredictions } from '../lib/matches';
 import type { Sprint3MatchRecord, Sprint3MatchStatus, Sprint3PredictionRecord } from '../lib/types';
 
@@ -51,15 +52,19 @@ function statusLabel(status: Sprint3MatchStatus) {
 }
 
 function renderFlag(flag: string | null, fallback: string) {
-  if (flag && /^https?:\/\//i.test(flag)) {
-    return <img alt="" className="h-12 w-12 rounded-full object-cover" src={flag} />;
+  const code = getFlagCode(flag);
+
+  if (code) {
+    return (
+      <span
+        aria-hidden="true"
+        className={`fi fi-${code} rounded-full`}
+        style={{ width: 48, height: 48, display: 'inline-block' }}
+      />
+    );
   }
 
-  return (
-    <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2A2A2A] text-2xl">
-      {getFlagLabel(flag, fallback)}
-    </span>
-  );
+  return <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2A2A2A] text-base font-bold">{fallback}</span>;
 }
 
 function initials(name: string) {
@@ -95,6 +100,7 @@ export default function Matches() {
   const { user } = useAuth();
   const [matches, setMatches] = useState<Sprint3MatchRecord[]>([]);
   const [predictions, setPredictions] = useState<Record<string, Sprint3PredictionRecord>>({});
+  const [quickBetMatches, setQuickBetMatches] = useState<Sprint3MatchRecord[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<MatchFilter>('todos');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -138,6 +144,10 @@ export default function Matches() {
     () => groupMatchesByRound(matches.filter((match) => matchesFilter(match, activeFilter))),
     [activeFilter, matches],
   );
+  const pendingMatchesWithoutPrediction = useMemo(
+    () => matches.filter((match) => match.status === 'pendente' && !predictions[match.id]),
+    [matches, predictions],
+  );
 
   const navigateToMatch = (matchId: string) => {
     window.location.hash = `#match/${matchId}`;
@@ -147,12 +157,26 @@ export default function Matches() {
     <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-4">
         <header className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-5">
-          <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Jogos</p>
-          <h1 className="mt-3 text-3xl font-bold uppercase tracking-wide text-white">Painel de confrontos</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
-            Explore os jogos da Copa, acompanhe o status da rodada e deixe seus palpites enquanto as partidas ainda
-            estiverem pendentes.
-          </p>
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Jogos</p>
+              <h1 className="mt-3 text-3xl font-bold uppercase tracking-wide text-white">Painel de confrontos</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+                Explore os jogos da Copa, acompanhe o status da rodada e deixe seus palpites enquanto as partidas ainda
+                estiverem pendentes.
+              </p>
+            </div>
+
+            {pendingMatchesWithoutPrediction.length > 0 ? (
+              <button
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#CCFF00] px-5 py-3 text-sm font-bold uppercase tracking-wide text-black transition hover:bg-[#CCFF00]/90"
+                onClick={() => setQuickBetMatches(pendingMatchesWithoutPrediction)}
+                type="button"
+              >
+                ⚡ Modo Rapido
+              </button>
+            ) : null}
+          </div>
         </header>
 
         <div className="flex flex-wrap gap-2">
@@ -332,6 +356,19 @@ export default function Matches() {
           </div>
         )}
       </div>
+
+      {quickBetMatches ? (
+        <QuickBetMode
+          matches={quickBetMatches}
+          onClose={() => setQuickBetMatches(null)}
+          onPredictionSaved={(prediction) => {
+            setPredictions((current) => ({
+              ...current,
+              [prediction.match_id]: prediction,
+            }));
+          }}
+        />
+      ) : null}
     </div>
   );
 }

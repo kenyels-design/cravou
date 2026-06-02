@@ -1,7 +1,5 @@
 import { DEPARTMENTS } from './types';
 
-const REGIONAL_INDICATOR_A = 0x1f1e6;
-
 const DEPARTMENT_ALIASES: Record<string, string> = {
   financeiro: 'Financeiro',
   administrativo: 'Administrativo',
@@ -23,32 +21,13 @@ function normalizeText(value: string) {
     .replace(/[\u0300-\u036f]/g, '');
 }
 
-export function countryCodeToFlag(code: string) {
-  const normalizedCode = code.trim().toUpperCase();
-
-  if (!/^[A-Z]{2}$/.test(normalizedCode)) {
-    return code;
-  }
-
-  return Array.from(normalizedCode)
-    .map((char) => String.fromCodePoint(REGIONAL_INDICATOR_A + char.charCodeAt(0) - 65))
-    .join('');
-}
-
-export function getFlagLabel(flag: string | null, fallback: string) {
+export function getFlagCode(flag: string | null) {
   if (!flag) {
-    return fallback;
+    return null;
   }
 
-  if (/^https?:\/\//i.test(flag)) {
-    return flag;
-  }
-
-  if (/^[A-Za-z]{2}$/.test(flag.trim())) {
-    return countryCodeToFlag(flag);
-  }
-
-  return flag;
+  const normalizedCode = flag.trim().toLowerCase();
+  return /^[a-z]{2}$/.test(normalizedCode) ? normalizedCode : null;
 }
 
 export function formatMatchKickoff(matchTime: string) {

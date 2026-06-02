@@ -1,9 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AuthError } from '@supabase/supabase-js';
+import { Button } from '../components/ui/Button';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
+import { InputField, SelectField } from '../components/ui/InputField';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import { normalizeDepartmentName } from '../lib/display';
 import { getUserPredictionStats } from '../lib/matches';
+import { supabase } from '../lib/supabaseClient';
+import { DEPARTMENTS } from '../lib/types';
 
 function initials(name: string) {
   return name
@@ -15,17 +20,28 @@ function initials(name: string) {
 }
 
 export default function Profile() {
-  const { profile, signOut, user } = useAuth();
+  const { addToast } = useToast();
+  const { profile, refreshProfile, signOut, user } = useAuth();
+  const [isEditing, setIsEditing] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
+  const [saveLoading, setSaveLoading] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
   const [statsError, setStatsError] = useState<string | null>(null);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [fullName, setFullName] = useState('');
+  const [department, setDepartment] = useState('');
   const [stats, setStats] = useState({
     totalPoints: 0,
     predictionCount: 0,
   });
 
   const avatarInitials = useMemo(() => initials(profile?.nome ?? user?.email ?? 'Camerite'), [profile?.nome, user?.email]);
+
+  useEffect(() => {
+    setFullName(profile?.nome ?? '');
+    setDepartment(normalizeDepartmentName(profile?.departamento ?? null) ?? '');
+  }, [profile?.departamento, profile?.nome]);
 
   useEffect(() => {
     let active = true;
@@ -90,6 +106,62 @@ export default function Profile() {
     }
   };
 
+  const handleCancelEdit = () => {
+    setFullName(profile?.nome ?? '');
+    setDepartment(normalizeDepartmentName(profile?.departamento ?? null) ?? '');
+    setFormError(null);
+    setIsEditing(false);
+  };
+
+  const handleSaveProfile = async () => {
+    if (!user?.id) {
+      addToast('Sessao nao encontrada para atualizar o perfil.', 'error');
+      return;
+    }
+
+    const trimmedName = fullName.trim();
+
+    if (!trimmedName) {
+      setFormError('Informe seu nome completo.');
+      return;
+    }
+
+    if (!department) {
+      setFormError('Selecione um departamento.');
+      return;
+    }
+
+    setSaveLoading(true);
+    setFormError(null);
+
+    try {
+      const { error } = await supabase
+        .from('cravou_users')
+        .update({
+          nome: trimmedName,
+          departamento: department,
+        })
+        .eq('id', user.id);
+
+      if (error) {
+        throw error;
+      }
+
+      await refreshProfile();
+      setIsEditing(false);
+      addToast('Perfil atualizado com sucesso.', 'success');
+    } catch (error) {
+      const message =
+        error && typeof error === 'object' && 'message' in error
+          ? String(error.message)
+          : 'Nao foi possivel atualizar seu perfil agora.';
+      setFormError(message);
+      addToast(message, 'error');
+    } finally {
+      setSaveLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-5xl space-y-5">
@@ -109,7 +181,72 @@ export default function Profile() {
                 <p className="break-all text-sm text-gray-400">{user?.email ?? 'Sem e-mail'}</p>
               </div>
             </div>
+
+            {!isEditing ? (
+              <div className="lg:ml-auto">
+                <Button
+                  className="w-full bg-[#CCFF00] text-black shadow-none hover:bg-[#CCFF00]/90 lg:w-auto"
+                  onClick={() => {
+                    setFormError(null);
+                    setIsEditing(true);
+                  }}
+                  type="button"
+                >
+                  Editar
+                </Button>
+              </div>
+            ) : null}
           </div>
+
+          {isEditing ? (
+            <div className="mt-6 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <InputField
+                  autoComplete="name"
+                  id="profile-full-name"
+                  label="Nome completo"
+                  onChange={(event) => setFullName(event.target.value)}
+                  placeholder="Seu nome"
+                  value={fullName}
+                />
+                <InputField
+                  disabled
+                  id="profile-email"
+                  label="E-mail"
+                  value={user?.email ?? ''}
+                />
+              </div>
+
+              <div className="mt-4 grid gap-4 md:grid-cols-2">
+                <SelectField
+                  id="profile-department"
+                  label="Departamento"
+                  onChange={(event) => setDepartment(event.target.value)}
+                  options={[
+                    { label: 'Selecione seu setor', value: '' },
+                    ...DEPARTMENTS.map((item) => ({ label: item, value: item })),
+                  ]}
+                  value={department}
+                />
+              </div>
+
+              {formError ? <div className="mt-4"><FeedbackBanner message={formError} tone="error" /></div> : null}
+
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row sm:justify-end">
+                <Button disabled={saveLoading} onClick={handleCancelEdit} type="button" variant="ghost">
+                  Cancelar
+                </Button>
+                <Button
+                  className="bg-[#CCFF00] text-black shadow-none hover:bg-[#CCFF00]/90"
+                  disabled={saveLoading}
+                  onClick={() => void handleSaveProfile()}
+                  type="button"
+                >
+                  {saveLoading ? 'Salvando...' : 'Salvar'}
+                </Button>
+              </div>
+            </div>
+          ) : null}
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
