@@ -47,14 +47,14 @@ function cardClass(prediction: Sprint3PredictionWithMatchRecord) {
   const status = predictionStatus(prediction);
 
   if (status === 'acerto') {
-    return 'bg-[#0D1F0D] border border-[#1A3A1A]';
+    return 'border border-[#C8E3A6] bg-[#F6FFE0] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[#0D1F0D] dark:border-[#1A3A1A] dark:shadow-none';
   }
 
   if (status === 'erro') {
-    return 'bg-[#1A0D0D] border border-[#2A1A1A]';
+    return 'border border-[#F2B6D3] bg-[#FFF1F7] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[#1A0D0D] dark:border-[#2A1A1A] dark:shadow-none';
   }
 
-  return 'bg-[#141414] border border-[#2A2A2A]';
+  return 'border border-[#D0D0D8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[#141414] dark:border-[#2A2A2A] dark:shadow-none';
 }
 
 export default function MyPredictions() {
@@ -118,9 +118,9 @@ export default function MyPredictions() {
   }, [safePredictions]);
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#EEEEF2] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-5">
-        <header className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414]">
+        <header className="rounded-[16px] border border-[#D0D0D8] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#CCFF00]">Historico</p>
@@ -145,7 +145,7 @@ export default function MyPredictions() {
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                   isActive
                     ? 'bg-[#CCFF00] text-black'
-                    : 'border border-[#E0E0E0] bg-transparent text-zinc-600 hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:text-gray-400 dark:hover:text-white',
+                    : 'border border-[#D0D0D8] bg-white text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:bg-transparent dark:text-gray-400 dark:shadow-none dark:hover:text-white',
                 ].join(' ')}
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -160,11 +160,11 @@ export default function MyPredictions() {
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
 
         {loading ? (
-          <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
+          <div className="rounded-[16px] border border-[#D0D0D8] bg-white p-10 text-center text-sm text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300 dark:shadow-none">
             Carregando seus palpites...
           </div>
         ) : filteredPredictions.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-500 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
+          <div className="rounded-[16px] border border-dashed border-[#D0D0D8] bg-white p-10 text-center text-sm text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400 dark:shadow-none">
             Nenhum palpite encontrado para este filtro.
           </div>
         ) : (
@@ -185,15 +185,15 @@ export default function MyPredictions() {
                     </div>
                   ) : null}
 
-                  <p className="text-xs uppercase tracking-wide text-gray-500">{prediction.matches.round}</p>
-                  <h3 className="mt-2 text-lg font-bold text-white">
+                  <p className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">{prediction.matches.round}</p>
+                  <h3 className="mt-2 text-lg font-bold text-[#0A0A0A] dark:text-white">
                     {prediction.matches.home_team} x {prediction.matches.away_team}
                   </h3>
 
                   <div className="mt-4 flex items-center justify-between gap-3">
                     <div>
-                      <p className="text-xs uppercase tracking-wide text-gray-500">Meu palpite</p>
-                      <p className="mt-1 text-2xl font-bold text-white">
+                      <p className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">Meu palpite</p>
+                      <p className="mt-1 text-2xl font-bold text-[#0A0A0A] dark:text-white">
                         {prediction.home_score} x {prediction.away_score}
                       </p>
                     </div>
@@ -201,20 +201,22 @@ export default function MyPredictions() {
                     {status === 'pendente' || status === 'ao_vivo' ? (
                       <span
                         className={`rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wide ${
-                          status === 'ao_vivo' ? 'bg-[#FF007F] text-white' : 'border border-[#2A2A2A] text-gray-300'
+                          status === 'ao_vivo'
+                            ? 'bg-[#FF007F] text-white'
+                            : 'bg-[#E8E8F0] text-[#555566] dark:border dark:border-[#2A2A2A] dark:bg-transparent dark:text-gray-300'
                         }`}
                       >
                         {status === 'ao_vivo' ? 'Ao Vivo' : 'Pendente'}
                       </span>
                     ) : (
-                      <span className="rounded-full bg-[#1C1C1C] px-3 py-1 text-xs font-bold text-white">
+                      <span className="rounded-full bg-[#E8E8F0] px-3 py-1 text-xs font-bold text-[#0A0A0A] dark:bg-[#1C1C1C] dark:text-white">
                         {prediction.points ?? 0} pts
                       </span>
                     )}
                   </div>
 
                   {(status === 'acerto' || status === 'erro') && (
-                    <p className="mt-3 text-xs text-gray-400">
+                    <p className="mt-3 text-xs text-[#555566] dark:text-gray-400">
                       Real: {prediction.matches.home_score ?? '--'} x {prediction.matches.away_score ?? '--'}
                     </p>
                   )}

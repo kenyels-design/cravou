@@ -16,12 +16,19 @@
 
 :root {
   color: #0a0a0a;
-  background: #f5f5f5;
+  background: #eeeef2;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  --page-bg-light: #eeeef2;
+  --card-bg-light: #ffffff;
+  --card-border-light: #d0d0d8;
+  --text-primary-light: #0a0a0a;
+  --text-secondary-light: #555566;
+  --badge-pending-bg-light: #e8e8f0;
+  --shadow-card-light: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 html.dark:root {
@@ -34,7 +41,7 @@ html.dark:root {
 }
 
 html {
-  background: #f5f5f5;
+  background: #eeeef2;
 }
 
 html.dark {
@@ -45,7 +52,10 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: linear-gradient(180deg, #fafafa 0%, #f1f1f1 100%);
+  background:
+    radial-gradient(circle at top left, rgba(204, 255, 0, 0.08), transparent 22%),
+    radial-gradient(circle at top right, rgba(140, 150, 255, 0.08), transparent 24%),
+    linear-gradient(180deg, #f4f4f8 0%, #eeeef2 100%);
   color: #0a0a0a;
 }
 

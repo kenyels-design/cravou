@@ -127,14 +127,14 @@ function initials(name: string) {
 
 function cardClass(status: Sprint3MatchStatus | null | undefined) {
   if (status === 'ao_vivo') {
-    return 'bg-[#0D2B0D] border border-[#1A4A1A]';
+    return 'border border-[#C8E3A6] bg-[#F6FFE0] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[#0D2B0D] dark:border-[#1A4A1A]';
   }
 
   if (status === 'pendente') {
-    return 'bg-[#141414] border border-[#2A2A2A]';
+    return 'border border-[#D0D0D8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[#141414] dark:border-[#2A2A2A]';
   }
 
-  return 'bg-[#0F0F0F] border border-[#1A1A1A] opacity-70';
+  return 'border border-[#D0D0D8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[#0F0F0F] dark:border-[#1A1A1A] dark:opacity-70';
 }
 
 function realScoreText(match: Sprint3MatchRecord) {
@@ -234,14 +234,14 @@ export default function Matches() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#EEEEF2] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-4">
-        <header className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414]">
+        <header className="rounded-[16px] border border-[#D0D0D8] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Jogos</p>
               <h1 className="mt-3 text-3xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">Painel de confrontos</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-gray-400">
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-[#555566] dark:text-gray-400">
                 Explore os jogos da Copa, acompanhe o status da rodada e deixe seus palpites enquanto as partidas ainda
                 estiverem pendentes.
               </p>
@@ -270,7 +270,7 @@ export default function Matches() {
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                   isActive
                     ? 'bg-[#CCFF00] text-black'
-                    : 'border border-[#E0E0E0] bg-transparent text-zinc-600 hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:text-gray-400 dark:hover:text-white',
+                    : 'border border-[#D0D0D8] bg-white text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:bg-transparent dark:text-gray-400 dark:shadow-none dark:hover:text-white',
                 ].join(' ')}
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -284,11 +284,11 @@ export default function Matches() {
 
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
         {loading ? (
-          <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
+          <div className="rounded-[16px] border border-[#D0D0D8] bg-white p-10 text-center text-sm text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300 dark:shadow-none">
             Carregando jogos e palpites...
           </div>
         ) : groupedMatches.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-500 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
+          <div className="rounded-[16px] border border-dashed border-[#D0D0D8] bg-white p-10 text-center text-sm text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400 dark:shadow-none">
             Nenhum jogo encontrado para este filtro.
           </div>
         ) : (
@@ -297,17 +297,17 @@ export default function Matches() {
               <section className="space-y-4" key={round}>
                 <div className="flex items-center justify-between gap-4">
                   <div>
-                    <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Rodada</p>
-                    <h2 className="mt-1 text-2xl font-bold uppercase tracking-wide text-white">{round}</h2>
+                    <p className="text-xs font-bold uppercase tracking-wide text-[#555566] dark:text-gray-500">Rodada</p>
+                    <h2 className="mt-1 text-2xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">{round}</h2>
                   </div>
                   <div className="text-right">
-                    <p className="text-xs uppercase tracking-wide text-gray-500">{roundMatches.length} jogos</p>
+                    <p className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">{roundMatches.length} jogos</p>
                     {deadline != null ? (
                       <span
                         className={`mt-2 inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${
                           now >= deadline
-                            ? 'border border-[#FF007F] bg-[#2A101A] text-[#FF007F]'
-                            : 'border border-[#2A2A2A] bg-[#141414] text-[#CCFF00]'
+                            ? 'border border-[#FF007F] bg-[#FFE3F1] text-[#FF007F] dark:bg-[#2A101A]'
+                            : 'border border-[#D0D0D8] bg-[#E8E8F0] text-[#555566] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-[#CCFF00]'
                         }`}
                       >
                         {roundClosingLabel(deadline, now)}
@@ -344,9 +344,9 @@ export default function Matches() {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-xs uppercase tracking-wide text-gray-500">{match.round}</p>
+                            <p className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">{match.round}</p>
                             {matchStatus === 'pendente' ? (
-                              <p className="mt-2 text-xs text-gray-400">{formatMatchKickoff(match.match_time)}</p>
+                              <p className="mt-2 text-xs text-[#555566] dark:text-gray-400">{formatMatchKickoff(match.match_time)}</p>
                             ) : null}
                           </div>
 
@@ -354,9 +354,9 @@ export default function Matches() {
                             className={`rounded-full px-2 py-1 text-xs font-bold uppercase tracking-wide ${
                               matchStatus === 'ao_vivo'
                                 ? 'bg-[#FF007F] text-white'
-                                : matchStatus === 'pendente'
-                                  ? 'border border-[#2A2A2A] text-gray-400'
-                                  : 'border border-[#1A1A1A] text-gray-400'
+                              : matchStatus === 'pendente'
+                                  ? 'bg-[#E8E8F0] text-[#555566] dark:border dark:border-[#2A2A2A] dark:bg-transparent dark:text-gray-300'
+                                  : 'border border-[#D0D0D8] text-[#555566] dark:border-[#1A1A1A] dark:text-gray-400'
                             }`}
                           >
                             {statusLabel(matchStatus ?? 'finalizado')}
@@ -366,7 +366,7 @@ export default function Matches() {
                         <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                           <div className="text-center">
                             <div className="mx-auto flex justify-center">{renderFlag(match.home_flag, initials(match.home_team))}</div>
-                            <p className="mt-2 text-sm font-semibold text-white">{match.home_team}</p>
+                            <p className="mt-2 text-sm font-semibold text-[#0A0A0A] dark:text-white">{match.home_team}</p>
                           </div>
 
                           <div className="text-center">
@@ -375,8 +375,8 @@ export default function Matches() {
                                 matchStatus === 'ao_vivo'
                                   ? 'text-[#CCFF00]'
                                   : matchStatus === 'pendente'
-                                    ? 'text-white'
-                                    : 'text-gray-400'
+                                    ? 'text-[#0A0A0A] dark:text-white'
+                                    : 'text-[#555566] dark:text-gray-400'
                               }`}
                             >
                               {matchStatus === 'pendente'
@@ -387,22 +387,22 @@ export default function Matches() {
 
                           <div className="text-center">
                             <div className="mx-auto flex justify-center">{renderFlag(match.away_flag, initials(match.away_team))}</div>
-                            <p className="mt-2 text-sm font-semibold text-white">{match.away_team}</p>
+                            <p className="mt-2 text-sm font-semibold text-[#0A0A0A] dark:text-white">{match.away_team}</p>
                           </div>
                         </div>
 
                         {prediction ? (
-                          <div className="mt-5 rounded-[16px] border border-[#2A2A2A] bg-black/20 p-4">
+                          <div className="mt-5 rounded-[16px] border border-[#D0D0D8] bg-[#F6F6FA] p-4 dark:border-[#2A2A2A] dark:bg-black/20">
                             {showResolvedData ? (
                               <div className="space-y-3">
                                 <div className="flex items-center justify-between gap-3">
-                                  <span className="text-xs uppercase tracking-wide text-gray-500">Meu palpite</span>
-                                  <span className="rounded-full bg-[#1C1C1C] px-3 py-1 text-xs font-bold text-white">
+                                  <span className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">Meu palpite</span>
+                                  <span className="rounded-full bg-[#E8E8F0] px-3 py-1 text-xs font-bold text-[#0A0A0A] dark:bg-[#1C1C1C] dark:text-white">
                                     {prediction.home_score} x {prediction.away_score}
                                   </span>
                                 </div>
                                 <div className="flex items-center justify-between gap-3">
-                                  <span className="text-xs uppercase tracking-wide text-gray-500">Pontos</span>
+                                  <span className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">Pontos</span>
                                   <span className="rounded-full bg-[#CCFF00] px-3 py-1 text-xs font-bold text-black">
                                     {prediction.points ?? '--'}
                                   </span>
@@ -410,8 +410,8 @@ export default function Matches() {
                               </div>
                             ) : (
                               <div className="flex items-center justify-between gap-3">
-                                <span className="text-xs uppercase tracking-wide text-gray-500">Palpite salvo</span>
-                                <span className="rounded-full bg-[#1C1C1C] px-3 py-1 text-xs font-bold text-white">
+                                <span className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">Palpite salvo</span>
+                                <span className="rounded-full bg-[#E8E8F0] px-3 py-1 text-xs font-bold text-[#0A0A0A] dark:bg-[#1C1C1C] dark:text-white">
                                   {prediction.home_score} x {prediction.away_score}
                                 </span>
                               </div>
@@ -422,7 +422,7 @@ export default function Matches() {
                         {matchStatus === 'pendente' ? (
                           <div className={prediction ? 'mt-5' : 'mt-4'}>
                             <button
-                              className="inline-flex items-center rounded-full border border-[#2A2A2A] bg-[#1C1C1C] px-4 py-2 text-sm font-bold uppercase tracking-wide text-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="inline-flex items-center rounded-full border border-[#D0D0D8] bg-white px-4 py-2 text-sm font-bold uppercase tracking-wide text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#2A2A2A] dark:bg-[#1C1C1C] dark:text-gray-300 dark:shadow-none"
                               disabled={!canQuickOpenMatch}
                               onClick={(event) => {
                                 event.stopPropagation();

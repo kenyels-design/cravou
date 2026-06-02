@@ -145,13 +145,27 @@ export default function Profile() {
         .eq('id', user.id);
 
       if (error) {
+        console.error('Erro ao atualizar public.cravou_users', error);
         throw error;
+      }
+
+      const { error: authUpdateError } = await supabase.auth.updateUser({
+        data: {
+          nome: trimmedName,
+          departamento: department,
+        },
+      });
+
+      if (authUpdateError) {
+        console.error('Erro ao sincronizar user_metadata apos atualizar perfil', authUpdateError);
+        throw authUpdateError;
       }
 
       await refreshProfile();
       setIsEditing(false);
       addToast('Perfil atualizado com sucesso.', 'success');
     } catch (error) {
+      console.error('Falha no handleSaveProfile', error);
       const message =
         error && typeof error === 'object' && 'message' in error
           ? String(error.message)
@@ -164,12 +178,12 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#EEEEF2] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-5xl space-y-5">
         {logoutError ? <FeedbackBanner message={logoutError} tone="error" /> : null}
         {statsError ? <FeedbackBanner message={statsError} tone="error" /> : null}
 
-        <section className="rounded-2xl border border-[#E0E0E0] bg-white p-6 dark:border-[#2A2A2A] dark:bg-[#141414]">
+        <section className="rounded-2xl border border-[#D0D0D8] bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
             <div className="flex items-center gap-4">
               <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#CCFF00] bg-[#EFEFEF] text-2xl font-bold text-[#0A0A0A] dark:bg-[#2A2A2A] dark:text-white">
@@ -178,8 +192,8 @@ export default function Profile() {
               <div className="space-y-2">
                 <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Colaborador</p>
                 <p className="text-xl font-bold text-[#0A0A0A] dark:text-white">{profile?.nome ?? 'Colaborador Camerite'}</p>
-                <p className="text-sm text-zinc-600 dark:text-gray-300">{normalizeDepartmentName(profile?.departamento ?? null) ?? 'Sem departamento'}</p>
-                <p className="break-all text-sm text-zinc-500 dark:text-gray-400">{user?.email ?? 'Sem e-mail'}</p>
+                <p className="text-sm text-[#555566] dark:text-gray-300">{normalizeDepartmentName(profile?.departamento ?? null) ?? 'Sem departamento'}</p>
+                <p className="break-all text-sm text-[#555566] dark:text-gray-400">{user?.email ?? 'Sem e-mail'}</p>
               </div>
             </div>
 
@@ -201,7 +215,7 @@ export default function Profile() {
           </div>
 
           {isEditing ? (
-            <div className="mt-6 rounded-2xl border border-[#E0E0E0] bg-[#FAFAFA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
+            <div className="mt-6 rounded-2xl border border-[#D0D0D8] bg-[#F6F6FA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
               <div className="grid gap-4 md:grid-cols-2">
                 <InputField
                   autoComplete="name"
@@ -252,13 +266,13 @@ export default function Profile() {
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
-          <article className="rounded-2xl border border-[#E0E0E0] bg-white p-6 dark:border-[#2A2A2A] dark:bg-[#141414]">
-            <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-400">Pontuacao total</p>
+          <article className="rounded-2xl border border-[#D0D0D8] bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#555566] dark:text-gray-400">Pontuacao total</p>
             <p className="mt-3 text-5xl font-bold text-[#CCFF00]">{statsLoading ? '...' : stats.totalPoints}</p>
           </article>
 
-          <article className="rounded-2xl border border-[#E0E0E0] bg-white p-6 dark:border-[#2A2A2A] dark:bg-[#141414]">
-            <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-400">Palpites feitos</p>
+          <article className="rounded-2xl border border-[#D0D0D8] bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none">
+            <p className="text-xs font-bold uppercase tracking-wide text-[#555566] dark:text-gray-400">Palpites feitos</p>
             <p className="mt-3 text-5xl font-bold text-[#0A0A0A] dark:text-white">{statsLoading ? '...' : stats.predictionCount}</p>
           </article>
         </section>

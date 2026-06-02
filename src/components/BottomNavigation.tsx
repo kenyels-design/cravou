@@ -24,10 +24,10 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
     <>
       <nav
         aria-label="Navegacao principal desktop"
-        className="fixed inset-x-0 top-0 z-40 hidden border-b border-[#E0E0E0] bg-[#F5F5F5]/95 backdrop-blur-xl dark:border-[#2A2A2A] dark:bg-[#0A0A0A]/95 md:block"
+        className="fixed inset-x-0 top-0 z-40 hidden border-b border-[#D0D0D8] bg-[#EEEEF2]/95 backdrop-blur-xl dark:border-[#2A2A2A] dark:bg-[#0A0A0A]/95 md:block"
       >
         <div className="mx-auto flex h-16 w-full max-w-6xl items-center justify-center gap-3 px-8">
-          <div className="flex items-center gap-2 rounded-full border border-[#E0E0E0] bg-white p-2 shadow-[0_18px_40px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414]/95 dark:shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
+          <div className="flex items-center gap-2 rounded-full border border-[#D0D0D8] bg-white p-2 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414]/95 dark:shadow-[0_18px_40px_rgba(0,0,0,0.22)]">
             {desktopNavItems.map((item) => {
               const isActive = currentRoute === item.hash;
 
@@ -39,7 +39,7 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
                     'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                     isActive
                       ? 'bg-[#CCFF00] text-black'
-                      : 'text-zinc-600 hover:bg-[#F5F5F5] hover:text-[#0A0A0A] dark:text-gray-400 dark:hover:bg-[#1C1C1C] dark:hover:text-white',
+                      : 'text-[#555566] hover:bg-[#F1F1F6] hover:text-[#0A0A0A] dark:text-gray-400 dark:hover:bg-[#1C1C1C] dark:hover:text-white',
                   ].join(' ')}
                   href={item.hash}
                   key={item.hash}
@@ -55,7 +55,7 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
 
       <nav
         aria-label="Navegacao principal mobile"
-        className="fixed bottom-4 left-1/2 z-50 flex h-16 w-[calc(100%-1.5rem)] max-w-6xl -translate-x-1/2 items-center justify-between gap-2 rounded-full border border-[#E0E0E0] bg-white/95 px-2 py-1 shadow-[0_24px_60px_rgba(0,0,0,0.14)] backdrop-blur-2xl dark:border-[#2A2A2A] dark:bg-[#141414]/95 dark:shadow-[0_24px_60px_rgba(0,0,0,0.45)] md:hidden"
+        className="fixed bottom-4 left-1/2 z-50 flex h-16 w-[calc(100%-1.5rem)] max-w-6xl -translate-x-1/2 items-center justify-between gap-2 rounded-full border border-[#D0D0D8] bg-white/95 px-2 py-1 shadow-[0_2px_8px_rgba(0,0,0,0.08)] backdrop-blur-2xl dark:border-[#2A2A2A] dark:bg-[#141414]/95 dark:shadow-[0_24px_60px_rgba(0,0,0,0.45)] md:hidden"
       >
         {mobileNavItems.map((item) => {
           const isActive = currentRoute === item.hash;
@@ -68,7 +68,7 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                 isActive
                   ? 'bg-[#CCFF00] text-black'
-                  : 'text-zinc-600 hover:bg-[#F5F5F5] hover:text-[#0A0A0A] dark:text-gray-400 dark:hover:bg-[#1C1C1C] dark:hover:text-white',
+                  : 'text-[#555566] hover:bg-[#F1F1F6] hover:text-[#0A0A0A] dark:text-gray-400 dark:hover:bg-[#1C1C1C] dark:hover:text-white',
               ].join(' ')}
               href={item.hash}
               key={item.hash}
@@ -76,7 +76,7 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
               <span
                 aria-hidden="true"
                 className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${
-                  isActive ? 'bg-black/10' : 'bg-[#EFEFEF] dark:bg-[#1C1C1C]'
+                  isActive ? 'bg-black/10' : 'bg-[#E8E8F0] dark:bg-[#1C1C1C]'
                 }`}
               >
                 {item.icon}
