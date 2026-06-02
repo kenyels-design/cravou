@@ -1,27 +1,13 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
-type SyncMode = 'full' | 'live';
+type SyncMode = 'scheduled' | 'daily';
 type MatchStatus = 'pendente' | 'ao_vivo' | 'finalizado' | 'aguardando_resultado';
 
 type ApiFixture = {
   fixture?: {
     id?: number;
-    date?: string;
     status?: {
       short?: string;
-    };
-  };
-  league?: {
-    round?: string;
-  };
-  teams?: {
-    home?: {
-      name?: string;
-      flag?: string;
-    };
-    away?: {
-      name?: string;
-      flag?: string;
     };
   };
   goals?: {
@@ -30,16 +16,20 @@ type ApiFixture = {
   };
 };
 
-type ExistingMatch = {
+type DbMatch = {
   id: string;
-  api_fixture_id: number;
+  api_fixture_id: number | null;
+  match_time: string;
   status: MatchStatus;
   home_score: number | null;
   away_score: number | null;
+  last_synced_at: string | null;
 };
 
 const RAPIDAPI_HOST = 'api-football-v1.p.rapidapi.com';
 const API_BASE_URL = `https://${RAPIDAPI_HOST}/v3/fixtures`;
+const MATCH_DURATION_BUFFER_MINUTES = 130;
+const SYNC_COOLDOWN_HOURS = 2;
 
 function log(scope: string, details: unknown) {
   console.log(`[sync-matches] ${scope}`, details);
@@ -70,18 +60,15 @@ function isCronRequest(request: Request) {
   return false;
 }
 
-function getMode(request: Request): SyncMode {
+function getMode(request: Request): SyncMode | null {
   const url = new URL(request.url);
-  return url.searchParams.get('mode') === 'live' ? 'live' : 'full';
-}
+  const mode = url.searchParams.get('mode');
 
-function extractGroupName(round: string | undefined) {
-  if (!round) {
-    return null;
+  if (mode === 'scheduled' || mode === 'daily') {
+    return mode;
   }
 
-  const match = round.match(/group\s+[a-z]/i);
-  return match ? match[0] : null;
+  return null;
 }
 
 function mapStatus(shortStatus: string | undefined): MatchStatus {
@@ -93,7 +80,7 @@ function mapStatus(shortStatus: string | undefined): MatchStatus {
     return 'pendente';
   }
 
-  if (['1H', 'HT', '2H', 'ET', 'BT', 'P', 'SUSP', 'INT', 'LIVE'].includes(shortStatus)) {
+  if (['1H', 'HT', '2H', 'ET', 'BT', 'P', 'LIVE'].includes(shortStatus)) {
     return 'ao_vivo';
   }
 
@@ -101,14 +88,47 @@ function mapStatus(shortStatus: string | undefined): MatchStatus {
     return 'finalizado';
   }
 
-  if (['PST', 'CANC', 'ABD', 'AWD', 'WO'].includes(shortStatus)) {
+  if (['PST', 'CANC', 'ABD'].includes(shortStatus)) {
     return 'aguardando_resultado';
   }
 
   return 'aguardando_resultado';
 }
 
-async function fetchFixtures(url: URL, rapidApiKey: string) {
+function isScheduledCandidate(match: DbMatch, now: Date) {
+  if (match.status === 'finalizado') {
+    return false;
+  }
+
+  const matchTime = new Date(match.match_time);
+  const threshold = new Date(matchTime.getTime() + MATCH_DURATION_BUFFER_MINUTES * 60 * 1000);
+
+  if (threshold > now) {
+    return false;
+  }
+
+  if (!match.last_synced_at) {
+    return true;
+  }
+
+  const lastSyncedAt = new Date(match.last_synced_at);
+  const cooldownLimit = new Date(now.getTime() - SYNC_COOLDOWN_HOURS * 60 * 60 * 1000);
+
+  return lastSyncedAt < cooldownLimit;
+}
+
+function isDailyCandidate(match: DbMatch, currentUtcDate: string) {
+  if (match.status === 'finalizado') {
+    return false;
+  }
+
+  return match.match_time.slice(0, 10) === currentUtcDate;
+}
+
+async function fetchFixtureById(fixtureId: number, rapidApiKey: string) {
+  const url = new URL(API_BASE_URL);
+  url.searchParams.set('id', String(fixtureId));
+
   const response = await fetch(url, {
     headers: {
       'x-rapidapi-host': RAPIDAPI_HOST,
@@ -117,78 +137,55 @@ async function fetchFixtures(url: URL, rapidApiKey: string) {
   });
 
   if (response.status === 429) {
-    log('rapidapi-rate-limit', { url: url.toString(), status: response.status });
-    return [];
+    return {
+      kind: 'rate_limit' as const,
+    };
   }
 
   if (!response.ok) {
     const body = await response.text();
-    log('rapidapi-error', { url: url.toString(), status: response.status, body });
-    return [];
+    log('rapidapi-error', { fixtureId, status: response.status, body });
+    return {
+      kind: 'error' as const,
+    };
   }
 
   const payload = await response.json();
-  return (payload?.response as ApiFixture[] | undefined) ?? [];
-}
+  const fixture = (payload?.response as ApiFixture[] | undefined)?.[0];
 
-async function getFixtures(mode: SyncMode, rapidApiKey: string) {
-  if (mode === 'full') {
-    const url = new URL(API_BASE_URL);
-    url.searchParams.set('league', '1');
-    url.searchParams.set('season', '2026');
-
-    return fetchFixtures(url, rapidApiKey);
+  if (!fixture) {
+    return {
+      kind: 'not_found' as const,
+    };
   }
 
-  const liveUrl = new URL(API_BASE_URL);
-  liveUrl.searchParams.set('league', '1');
-  liveUrl.searchParams.set('season', '2026');
-  liveUrl.searchParams.set('status', '1H-2H-HT-ET-BT-P');
-
-  const nextUrl = new URL(API_BASE_URL);
-  nextUrl.searchParams.set('league', '1');
-  nextUrl.searchParams.set('season', '2026');
-  nextUrl.searchParams.set('next', '5');
-
-  const [liveFixtures, nextFixtures] = await Promise.all([
-    fetchFixtures(liveUrl, rapidApiKey),
-    fetchFixtures(nextUrl, rapidApiKey),
-  ]);
-
-  const uniqueFixtures = new Map<number, ApiFixture>();
-
-  [...liveFixtures, ...nextFixtures].forEach((fixture) => {
-    const fixtureId = fixture.fixture?.id;
-    if (fixtureId) {
-      uniqueFixtures.set(fixtureId, fixture);
-    }
-  });
-
-  return [...uniqueFixtures.values()];
+  return {
+    kind: 'ok' as const,
+    fixture,
+  };
 }
 
-function toMatchPayload(fixture: ApiFixture) {
-  const round = fixture.league?.round ?? 'Rodada indefinida';
-  const shortStatus = fixture.fixture?.status?.short;
+async function markLastSyncedNow(supabase: ReturnType<typeof createClient>, matchId: string) {
+  const { error } = await supabase
+    .schema('cravou')
+    .from('matches')
+    .update({ last_synced_at: new Date().toISOString() })
+    .eq('id', matchId);
 
-  return {
-    api_fixture_id: fixture.fixture?.id ?? null,
-    home_team: fixture.teams?.home?.name ?? 'Mandante indefinido',
-    away_team: fixture.teams?.away?.name ?? 'Visitante indefinido',
-    home_flag: fixture.teams?.home?.flag ?? null,
-    away_flag: fixture.teams?.away?.flag ?? null,
-    match_time: fixture.fixture?.date ?? new Date().toISOString(),
-    round,
-    group_name: round.toLowerCase().includes('group') ? extractGroupName(round) : null,
-    status: mapStatus(shortStatus),
-    home_score: fixture.goals?.home ?? null,
-    away_score: fixture.goals?.away ?? null,
-  };
+  if (error) {
+    log('last-synced-update-error', { matchId, error });
+  }
 }
 
 Deno.serve(async (request) => {
   if (!isCronRequest(request)) {
     return jsonResponse({ error: 'Unauthorized' }, 401);
+  }
+
+  const mode = getMode(request);
+
+  if (!mode) {
+    return jsonResponse({ error: 'Invalid mode. Use ?mode=scheduled or ?mode=daily' }, 400);
   }
 
   const rapidApiKey = Deno.env.get('RAPIDAPI_KEY');
@@ -204,123 +201,103 @@ Deno.serve(async (request) => {
     );
   }
 
-  const mode = getMode(request);
   const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const now = new Date();
+  const currentUtcDate = now.toISOString().slice(0, 10);
 
-  let synced = 0;
-  let updated = 0;
+  let checked = 0;
+  let finalized = 0;
   let errors = 0;
 
   try {
-    const fixtures = await getFixtures(mode, rapidApiKey);
-
-    if (fixtures.length === 0) {
-      return jsonResponse({ synced, updated, errors });
-    }
-
-    const fixtureIds = fixtures
-      .map((fixture) => fixture.fixture?.id)
-      .filter((fixtureId): fixtureId is number => typeof fixtureId === 'number');
-
-    const { data: existingMatches, error: existingMatchesError } = await supabase
+    const { data, error } = await supabase
       .schema('cravou')
       .from('matches')
-      .select('id, api_fixture_id, status, home_score, away_score')
-      .in('api_fixture_id', fixtureIds);
+      .select('id, api_fixture_id, match_time, status, home_score, away_score, last_synced_at')
+      .neq('status', 'finalizado');
 
-    if (existingMatchesError) {
-      log('load-existing-matches-error', existingMatchesError);
-      return jsonResponse({ synced, updated, errors: errors + fixtureIds.length });
+    if (error) {
+      log('load-matches-error', error);
+      return jsonResponse({ checked, finalized, errors: errors + 1 });
     }
 
-    const existingByFixtureId = new Map<number, ExistingMatch>();
-    ((existingMatches as ExistingMatch[] | null) ?? []).forEach((match) => {
-      existingByFixtureId.set(match.api_fixture_id, match);
-    });
+    const allMatches = (data as DbMatch[] | null) ?? [];
+    const candidates = allMatches.filter((match) =>
+      mode === 'scheduled' ? isScheduledCandidate(match, now) : isDailyCandidate(match, currentUtcDate),
+    );
 
-    for (const fixture of fixtures) {
-      try {
-        const payload = toMatchPayload(fixture);
-        const fixtureId = payload.api_fixture_id;
+    for (const match of candidates) {
+      checked += 1;
 
-        if (!fixtureId) {
-          errors += 1;
-          log('missing-fixture-id', fixture);
-          continue;
-        }
-
-        const existing = existingByFixtureId.get(fixtureId);
-
-        if (!existing) {
-          const { error: insertError } = await supabase.schema('cravou').from('matches').insert(payload);
-
-          if (insertError) {
-            errors += 1;
-            log('insert-match-error', { fixtureId, insertError });
-            continue;
-          }
-
-          updated += 1;
-          synced += 1;
-          continue;
-        }
-
-        const changed =
-          existing.status !== payload.status ||
-          existing.home_score !== payload.home_score ||
-          existing.away_score !== payload.away_score;
-
-        if (!changed) {
-          synced += 1;
-          continue;
-        }
-
-        const { data: updatedMatch, error: updateError } = await supabase
-          .schema('cravou')
-          .from('matches')
-          .update({
-            status: payload.status,
-            home_score: payload.home_score,
-            away_score: payload.away_score,
-          })
-          .eq('id', existing.id)
-          .select('id, status, home_score, away_score')
-          .single();
-
-        if (updateError) {
-          errors += 1;
-          log('update-match-error', { fixtureId, updateError });
-          continue;
-        }
-
-        updated += 1;
-        synced += 1;
-
-        const becameFinalized =
-          existing.status !== 'finalizado' &&
-          updatedMatch?.status === 'finalizado' &&
-          updatedMatch?.home_score != null &&
-          updatedMatch?.away_score != null;
-
-        if (becameFinalized) {
-          const { error: rpcError } = await supabase.schema('cravou').rpc('calcular_pontos', {
-            p_match_id: existing.id,
-          });
-
-          if (rpcError) {
-            errors += 1;
-            log('calculate-points-error', { fixtureId, matchId: existing.id, rpcError });
-          }
-        }
-      } catch (fixtureError) {
+      if (!match.api_fixture_id) {
         errors += 1;
-        log('fixture-processing-error', fixtureError);
+        log('missing-api-fixture-id', { matchId: match.id });
+        continue;
+      }
+
+      const apiResult = await fetchFixtureById(match.api_fixture_id, rapidApiKey);
+
+      if (apiResult.kind === 'rate_limit') {
+        log('rapidapi-rate-limit', { matchId: match.id, apiFixtureId: match.api_fixture_id });
+        await markLastSyncedNow(supabase, match.id);
+        continue;
+      }
+
+      if (apiResult.kind === 'not_found') {
+        errors += 1;
+        log('fixture-not-found', { matchId: match.id, apiFixtureId: match.api_fixture_id });
+        continue;
+      }
+
+      if (apiResult.kind === 'error') {
+        errors += 1;
+        continue;
+      }
+
+      const nextStatus = mapStatus(apiResult.fixture.fixture?.status?.short);
+      const nextHomeScore = apiResult.fixture.goals?.home ?? null;
+      const nextAwayScore = apiResult.fixture.goals?.away ?? null;
+
+      const { error: updateError } = await supabase
+        .schema('cravou')
+        .from('matches')
+        .update({
+          status: nextStatus,
+          home_score: nextHomeScore,
+          away_score: nextAwayScore,
+          last_synced_at: new Date().toISOString(),
+        })
+        .eq('id', match.id);
+
+      if (updateError) {
+        errors += 1;
+        log('match-update-error', { matchId: match.id, updateError });
+        continue;
+      }
+
+      const becameFinalized =
+        nextStatus === 'finalizado' &&
+        nextHomeScore != null &&
+        nextAwayScore != null &&
+        match.status !== 'finalizado';
+
+      if (becameFinalized) {
+        finalized += 1;
+
+        const { error: rpcError } = await supabase.schema('cravou').rpc('calcular_pontos', {
+          p_match_id: match.id,
+        });
+
+        if (rpcError) {
+          errors += 1;
+          log('calculate-points-error', { matchId: match.id, rpcError });
+        }
       }
     }
 
-    return jsonResponse({ synced, updated, errors });
+    return jsonResponse({ checked, finalized, errors });
   } catch (unexpectedError) {
     log('unexpected-error', unexpectedError);
-    return jsonResponse({ synced, updated, errors: errors + 1 });
+    return jsonResponse({ checked, finalized, errors: errors + 1 });
   }
 });

@@ -1,14 +1,75 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAuth } from '../context/AuthContext';
+import { normalizeDepartmentName } from '../lib/display';
 import { getLeaderboard } from '../lib/matches';
 import type { Sprint3LeaderboardEntry } from '../lib/types';
 
+type RankingMode = 'geral' | 'departamento';
+
+function initials(name: string) {
+  return name
+    .split(' ')
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? '')
+    .join('');
+}
+
+function departmentColor(department: string | null) {
+  const normalizedDepartment = normalizeDepartmentName(department);
+
+  if (!normalizedDepartment) {
+    return 'bg-[#2A2A2A]';
+  }
+
+  const palette = ['bg-[#2A2A2A]', 'bg-[#1C2A44]', 'bg-[#2A1C44]', 'bg-[#143514]', 'bg-[#45260A]'];
+  const index =
+    normalizedDepartment
+      .split('')
+      .reduce((sum, char) => sum + char.charCodeAt(0), 0) % palette.length;
+  return palette[index];
+}
+
+function PodiumCard({
+  entry,
+  position,
+}: {
+  entry: Sprint3LeaderboardEntry;
+  position: 1 | 2 | 3;
+}) {
+  const ringClass =
+    position === 1
+      ? 'ring-2 ring-[#CCFF00] shadow-[0_0_20px_#CCFF00]'
+      : position === 2
+        ? 'ring-1 ring-white'
+        : 'ring-1 ring-amber-500';
+  const avatarSize = position === 1 ? 'h-14 w-14 text-base border-[#CCFF00]' : 'h-11 w-11 text-sm border-white/40';
+  const pointsClass = position === 1 ? 'text-[#CCFF00] text-2xl' : position === 3 ? 'text-amber-500' : 'text-white';
+  const orderClass = position === 1 ? 'order-2' : position === 2 ? 'order-1' : 'order-3';
+
+  return (
+    <div className={`${orderClass} flex flex-col items-center`}>
+      <div className={`rounded-xl bg-[#141414] p-4 text-center ${ringClass}`}>
+        <div
+          className={`mx-auto flex ${avatarSize} items-center justify-center rounded-full border-2 font-bold text-white ${departmentColor(entry.departamento)}`}
+        >
+          {initials(entry.nome)}
+        </div>
+        <p className="mt-3 text-sm font-bold text-white">{entry.nome}</p>
+        <p className={`mt-2 font-bold ${pointsClass}`}>{entry.total_points}</p>
+      </div>
+      <span className="mt-2 text-xs text-gray-500">{position}º</span>
+    </div>
+  );
+}
+
 export default function Ranking() {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const [entries, setEntries] = useState<Sprint3LeaderboardEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [mode, setMode] = useState<RankingMode>('geral');
 
   const loadRanking = useCallback(async () => {
     setLoading(true);
@@ -33,56 +94,106 @@ export default function Ranking() {
     void loadRanking();
   }, [loadRanking]);
 
+  const visibleEntries = useMemo(() => {
+    const currentDepartment = normalizeDepartmentName(profile?.departamento ?? null);
+
+    if (mode === 'departamento' && currentDepartment) {
+      return entries.filter((entry) => normalizeDepartmentName(entry.departamento) === currentDepartment);
+    }
+
+    return entries;
+  }, [entries, mode, profile?.departamento]);
+
+  const podium = visibleEntries.slice(0, 3);
+  const rest = visibleEntries.slice(3);
+
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.10),_transparent_28%),radial-gradient(circle_at_top_right,_rgba(255,0,127,0.12),_transparent_24%),linear-gradient(180deg,_rgba(16,18,38,0.95),_rgba(7,10,24,1))] px-4 pb-28 pt-6 text-white md:px-8">
-      <div className="mx-auto max-w-6xl space-y-6">
-        <header className="rounded-bento-lg border border-white/10 bg-white/5 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-          <p className="text-xs font-semibold uppercase tracking-[0.3em] text-secondary">Ranking</p>
-          <h1 className="mt-3 text-3xl font-black uppercase tracking-[0.08em] text-white">
-            Classificacao geral
-          </h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">
-            Veja quem esta somando mais pontos na disputa interna da Camerite.
-          </p>
+    <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
+      <div className="mx-auto max-w-6xl space-y-5">
+        <header className="flex flex-col gap-4 rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Ranking</p>
+            <h2 className="mt-2 text-2xl font-bold text-white">Classificacao da rodada</h2>
+          </div>
+
+          <div className="flex rounded-full bg-[#141414] p-1">
+            {([
+              ['geral', 'Geral'],
+              ['departamento', 'Departamento'],
+            ] as const).map(([value, label]) => {
+              const isActive = mode === value;
+
+              return (
+                <button
+                  className={`rounded-full px-4 py-1 text-sm font-bold transition ${
+                    isActive ? 'bg-[#CCFF00] text-black' : 'text-gray-400'
+                  }`}
+                  key={value}
+                  onClick={() => setMode(value)}
+                  type="button"
+                >
+                  {label}
+                </button>
+              );
+            })}
+          </div>
         </header>
 
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
 
         {loading ? (
-          <div className="rounded-bento-lg border border-white/10 bg-white/5 p-10 text-center text-sm text-zinc-300 backdrop-blur-xl">
+          <div className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-300">
             Carregando ranking...
           </div>
-        ) : entries.length === 0 ? (
-          <div className="rounded-bento-lg border border-dashed border-white/15 bg-white/5 p-10 text-center text-sm leading-6 text-zinc-300 backdrop-blur-xl">
+        ) : visibleEntries.length === 0 ? (
+          <div className="rounded-[16px] border border-dashed border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-400">
             Ainda nao ha pontuacao consolidada para exibir.
           </div>
         ) : (
-          <section className="overflow-hidden rounded-bento-lg border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-            <div className="grid grid-cols-[72px_1.2fr_1fr_120px] gap-4 border-b border-white/10 px-5 py-4 text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">
-              <span>Pos.</span>
-              <span>Nome</span>
-              <span>Departamento</span>
-              <span className="text-right">Pontos</span>
-            </div>
+          <>
+            <section className="rounded-[16px] border border-[#2A2A2A] bg-[#101010] p-6">
+              <div className="flex items-end justify-center gap-4">
+                {podium[1] ? <PodiumCard entry={podium[1]} position={2} /> : null}
+                {podium[0] ? <PodiumCard entry={podium[0]} position={1} /> : null}
+                {podium[2] ? <PodiumCard entry={podium[2]} position={3} /> : null}
+              </div>
+            </section>
 
-            {entries.map((entry, index) => {
-              const isCurrentUser = user?.id === entry.user_id;
+            <section className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-4">
+              {rest.length > 0 ? (
+                rest.map((entry, index) => {
+                  const isCurrentUser = user?.id === entry.user_id;
 
-              return (
-                <div
-                  className={`grid grid-cols-[72px_1.2fr_1fr_120px] gap-4 border-b border-white/10 px-5 py-4 text-sm last:border-b-0 ${
-                    isCurrentUser ? 'bg-primary/10' : ''
-                  }`}
-                  key={entry.user_id}
-                >
-                  <span className="font-black text-white">{index + 1}</span>
-                  <span className={`font-semibold ${isCurrentUser ? 'text-primary' : 'text-white'}`}>{entry.nome}</span>
-                  <span className="text-zinc-300">{entry.departamento ?? 'Nao informado'}</span>
-                  <span className="text-right font-black text-white">{entry.total_points}</span>
-                </div>
-              );
-            })}
-          </section>
+                  return (
+                    <div
+                      className={`flex items-center gap-3 border-b border-[#1A1A1A] py-3 last:border-b-0 ${
+                        isCurrentUser ? 'border-l-2 border-[#CCFF00] bg-[#1A2A1A] pl-2' : ''
+                      }`}
+                      key={entry.user_id}
+                    >
+                      <span className="w-8 text-sm font-bold text-gray-500">{index + 4}</span>
+                      <div
+                        className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold text-white ${departmentColor(
+                          entry.departamento,
+                        )}`}
+                      >
+                        {initials(entry.nome)}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className={`truncate text-sm font-semibold ${isCurrentUser ? 'text-[#CCFF00]' : 'text-white'}`}>
+                          {entry.nome}
+                        </p>
+                        <p className="text-xs text-gray-500">{normalizeDepartmentName(entry.departamento) ?? 'Nao informado'}</p>
+                      </div>
+                      <span className="text-sm font-bold text-white">{entry.total_points} pts</span>
+                    </div>
+                  );
+                })
+              ) : (
+                <p className="text-sm text-gray-400">Somente o podium possui entradas neste momento.</p>
+              )}
+            </section>
+          </>
         )}
       </div>
     </div>

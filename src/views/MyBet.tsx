@@ -69,7 +69,7 @@ export default function MyBet() {
 
       setErrorMessage(
         isMissingTop3SchemaError(error)
-          ? 'A estrutura Top 3 no schema cravou ainda nao foi provisionada no Supabase. Aplique a migration antes de liberar esta tela.'
+          ? 'A estrutura de aposta final no schema cravou ainda nao foi provisionada no Supabase. Aplique a migration antes de liberar esta tela.'
           : message || fallback,
       );
       setTeams([]);
@@ -139,7 +139,7 @@ export default function MyBet() {
       const prediction = await saveTop3Prediction(user.id, selection);
       setSavedPrediction(prediction);
       setSelection(toFormSelection(prediction));
-      setSuccessMessage(savedPrediction ? 'Sua aposta foi atualizada com sucesso.' : 'Sua aposta Top 3 foi salva.');
+      setSuccessMessage(savedPrediction ? 'Sua aposta foi atualizada com sucesso.' : 'Sua aposta foi salva.');
     } catch (error) {
       const fallback = 'Nao foi possivel salvar sua aposta agora.';
       const message =
@@ -159,7 +159,7 @@ export default function MyBet() {
           <div className="rounded-bento-lg border border-white/10 bg-white/5 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-secondary">Minha aposta</p>
             <h1 className="mt-3 text-3xl font-black uppercase tracking-[0.08em] text-white">
-              Escolha o Top 3 final da Copa
+              Escolha sua aposta final
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">
               Salve campeao, vice-campeao e terceiro lugar em uma unica aposta. As tres escolhas precisam ser diferentes e ficam editaveis so enquanto a janela estiver aberta.
@@ -191,7 +191,7 @@ export default function MyBet() {
 
         {loading ? (
           <div className="rounded-bento-lg border border-white/10 bg-white/5 p-10 text-center text-sm text-zinc-300 backdrop-blur-xl">
-            Carregando sua aposta Top 3...
+            Carregando sua aposta...
           </div>
         ) : teams.length === 0 ? (
           <div className="rounded-bento-lg border border-dashed border-white/15 bg-white/5 p-10 text-center text-sm leading-6 text-zinc-300 backdrop-blur-xl">
@@ -271,7 +271,7 @@ export default function MyBet() {
                 </div>
               ) : (
                 <div className="mt-6 rounded-bento border border-dashed border-white/15 bg-black/15 p-6 text-sm leading-6 text-zinc-400">
-                  Nenhuma aposta salva ainda. Escolha o seu Top 3 e confirme para registrar a previsao.
+                  Nenhuma aposta salva ainda. Escolha suas selecoes e confirme para registrar a previsao.
                 </div>
               )}
             </article>

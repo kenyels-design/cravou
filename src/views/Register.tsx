@@ -6,17 +6,7 @@ import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { InputField, SelectField } from '../components/ui/InputField';
 import { isCorporateEmail, normalizeCorporateEmail, upsertUserProfile, syncAndFetchUserProfile } from '../lib/auth';
 import { supabase } from '../lib/supabaseClient';
-
-const DEPARTAMENTOS = [
-  'TI',
-  'Comercial',
-  'Marketing',
-  'Suporte',
-  'Financeiro',
-  'Operacoes',
-  'RH',
-  'Diretoria',
-];
+import { DEPARTMENTS } from '../lib/types';
 
 function getRegisterErrorMessage(error: AuthError | Error) {
   if ('message' in error && error.message.toLowerCase().includes('already registered')) {
@@ -101,8 +91,8 @@ export default function Register() {
       await syncAndFetchUserProfile(data.user);
 
       if (data.session) {
-        setSuccessMessage('Cadastro concluido. Sua aposta Top 3 ja pode ser registrada.');
-        window.location.hash = '#aposta';
+        setSuccessMessage('Cadastro concluido. Seu perfil ja pode ser usado no app.');
+        window.location.hash = '#home';
       } else {
         setSuccessMessage('Cadastro concluido. Sua conta corporativa ja pode ser usada no app.');
       }
@@ -125,7 +115,7 @@ export default function Register() {
     <AuthShell
       badge="Novo cadastro"
       title="Entrar no jogo"
-      subtitle="Crie sua conta corporativa e garanta que seu perfil fique sincronizado com a tabela cravou_users para registrar seu Top 3 final."
+      subtitle="Crie sua conta corporativa e mantenha seu perfil sincronizado com a tabela cravou_users para participar dos palpites jogo a jogo."
       footer={
         <a className="font-semibold text-primary transition hover:text-white" href="#login">
           Ja tenho conta
@@ -162,7 +152,7 @@ export default function Register() {
           onChange={(event) => setDepartamento(event.target.value)}
           options={[
             { label: 'Selecione seu setor', value: '' },
-            ...DEPARTAMENTOS.map((item) => ({ label: item, value: item })),
+            ...DEPARTMENTS.map((item) => ({ label: item, value: item })),
           ]}
           required
           value={departamento}

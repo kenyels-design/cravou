@@ -59,7 +59,7 @@ export default function Login() {
       }
 
       setSuccessMessage('Login realizado com sucesso. Redirecionando...');
-      window.location.hash = '#aposta';
+      window.location.hash = '#home';
     } catch (error) {
       const message =
         error && typeof error === 'object' && 'message' in error
@@ -75,7 +75,7 @@ export default function Login() {
     <AuthShell
       badge="Acesso interno"
       title="Cravou!"
-      subtitle="Entre com sua conta corporativa para registrar seu Top 3 final da Copa e acompanhar o resultado oficial."
+      subtitle="Entre com sua conta corporativa para acompanhar os jogos, registrar seus palpites e ver sua pontuacao."
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <a className="font-semibold text-primary transition hover:text-white" href="#cadastro">

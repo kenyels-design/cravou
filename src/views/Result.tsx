@@ -43,7 +43,7 @@ export default function Result() {
 
       setErrorMessage(
         isMissingTop3SchemaError(error)
-          ? 'As tabelas do Top 3 no schema cravou ainda nao foram criadas no Supabase. Aplique a migration antes de usar esta tela.'
+          ? 'As tabelas da aposta final no schema cravou ainda nao foram criadas no Supabase. Aplique a migration antes de usar esta tela.'
           : message || fallback,
       );
       setTeams([]);
@@ -69,10 +69,10 @@ export default function Result() {
           <div className="rounded-bento-lg border border-white/10 bg-white/5 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
             <p className="text-xs font-semibold uppercase tracking-[0.3em] text-secondary">Resultado</p>
             <h1 className="mt-3 text-3xl font-black uppercase tracking-[0.08em] text-white">
-              Top 3 oficial da Copa
+              Resultado oficial da Copa
             </h1>
             <p className="mt-3 max-w-2xl text-sm leading-6 text-zinc-300">
-              Esta tela mostra o Top 3 oficial assim que ele for publicado. Compare aqui o resultado final com a sua aposta.
+              Esta tela mostra o resultado oficial assim que ele for publicado. Compare aqui a definicao final com a sua aposta.
             </p>
           </div>
 
@@ -122,14 +122,14 @@ export default function Result() {
                     Aguardando resultado oficial
                   </p>
                   <p className="mt-3">
-                    O Top 3 oficial ainda nao foi publicado. Assim que campeao, vice e terceiro lugar forem definidos, esta tela sera atualizada.
+                    O resultado oficial ainda nao foi publicado. Assim que campeao, vice e terceiro lugar forem definidos, esta tela sera atualizada.
                   </p>
                 </div>
               )}
             </article>
 
             <article className="rounded-bento-lg border border-white/10 bg-white/5 p-6 shadow-[0_20px_60px_rgba(0,0,0,0.35)] backdrop-blur-xl">
-              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">Regra futura de pontuacao</p>
+              <p className="text-xs uppercase tracking-[0.25em] text-zinc-500">Regras complementares de pontuacao</p>
               <div className="mt-6 space-y-3">
                 {FUTURE_TOP3_SCORING_RULES.map((rule) => (
                   <div className="rounded-bento border border-white/10 bg-black/20 px-4 py-3 text-sm text-zinc-200" key={rule}>

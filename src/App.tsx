@@ -5,7 +5,9 @@ import BottomNavigation from './components/BottomNavigation';
 import ProtectedRoute from './routes/ProtectedRoute';
 import Admin from './views/Admin';
 import ForgotPassword from './views/ForgotPassword';
+import Home from './views/Home';
 import Login from './views/Login';
+import MatchDetail from './views/MatchDetail';
 import Matches from './views/Matches';
 import MyPredictions from './views/MyPredictions';
 import Profile from './views/Profile';
@@ -14,15 +16,24 @@ import Register from './views/Register';
 import ResetPassword from './views/ResetPassword';
 
 type PublicRoute = '#login' | '#cadastro' | '#esqueci';
-type ProtectedRouteHash = '#jogos' | '#meus-palpites' | '#ranking' | '#perfil' | '#admin';
+type ProtectedRouteHash = '#home' | '#jogos' | '#meus-palpites' | '#ranking' | '#perfil' | '#admin';
 type LegacyRoute = '#dashboard' | '#palpites' | '#aposta' | '#resultado';
-type Route = PublicRoute | ProtectedRouteHash | LegacyRoute;
+type MatchRoute = `#match/${string}`;
+type Route = PublicRoute | ProtectedRouteHash | LegacyRoute | MatchRoute;
+
+function isMatchRoute(route: string): route is MatchRoute {
+  return route.startsWith('#match/');
+}
 
 function resolveRoute(): Route {
-  const hash = window.location.hash as Route;
+  const hash = window.location.hash;
 
   if (!hash) {
     return '#login';
+  }
+
+  if (isMatchRoute(hash)) {
+    return hash;
   }
 
   if (
@@ -30,6 +41,7 @@ function resolveRoute(): Route {
       '#login',
       '#cadastro',
       '#esqueci',
+      '#home',
       '#jogos',
       '#meus-palpites',
       '#ranking',
@@ -41,14 +53,22 @@ function resolveRoute(): Route {
       '#dashboard',
     ].includes(hash)
   ) {
-    return hash;
+    return hash as Route;
   }
 
   return '#login';
 }
 
 function normalizeRoute(route: Route): PublicRoute | ProtectedRouteHash {
-  if (route === '#dashboard' || route === '#aposta' || route === '#resultado') {
+  if (route === '#dashboard') {
+    return '#home';
+  }
+
+  if (route === '#aposta' || route === '#resultado') {
+    return '#jogos';
+  }
+
+  if (isMatchRoute(route)) {
     return '#jogos';
   }
 
@@ -63,6 +83,7 @@ function AppRouter() {
   const [currentRoute, setCurrentRoute] = useState<Route>(resolveRoute());
   const { authLoading, profile, profileLoading, user } = useAuth();
   const normalizedRoute = normalizeRoute(currentRoute);
+  const selectedMatchId = isMatchRoute(currentRoute) ? currentRoute.slice('#match/'.length) : null;
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -79,7 +100,7 @@ function AppRouter() {
   }, []);
 
   useEffect(() => {
-    if (currentRoute !== normalizedRoute) {
+    if (!isMatchRoute(currentRoute) && currentRoute !== normalizedRoute) {
       window.location.hash = normalizedRoute;
     }
   }, [currentRoute, normalizedRoute]);
@@ -94,11 +115,11 @@ function AppRouter() {
     }
 
     if (user && profile && ['#login', '#cadastro', '#esqueci'].includes(normalizedRoute)) {
-      window.location.hash = '#jogos';
+      window.location.hash = '#home';
       return;
     }
 
-    if (!user && ['#jogos', '#meus-palpites', '#ranking', '#perfil', '#admin'].includes(normalizedRoute)) {
+    if (!user && ['#home', '#jogos', '#meus-palpites', '#ranking', '#perfil', '#admin'].includes(normalizedRoute)) {
       window.location.hash = '#login';
     }
   }, [authLoading, normalizedRoute, profile, profileLoading, user]);
@@ -136,13 +157,15 @@ function AppRouter() {
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-background text-white">
-        {normalizedRoute === '#jogos' ? <Matches /> : null}
+      <div className="min-h-screen bg-[#0A0A0A] text-white">
+        {normalizedRoute === '#home' ? <Home /> : null}
+        {normalizedRoute === '#jogos' && !selectedMatchId ? <Matches /> : null}
+        {selectedMatchId ? <MatchDetail matchId={selectedMatchId} /> : null}
         {normalizedRoute === '#meus-palpites' ? <MyPredictions /> : null}
         {normalizedRoute === '#ranking' ? <Ranking /> : null}
         {normalizedRoute === '#perfil' ? <Profile /> : null}
         {normalizedRoute === '#admin' ? <Admin /> : null}
-        <BottomNavigation currentRoute={normalizedRoute} />
+        <BottomNavigation currentRoute={selectedMatchId ? '#jogos' : normalizedRoute} />
       </div>
     </ProtectedRoute>
   );

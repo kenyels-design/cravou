@@ -5,6 +5,19 @@ export interface UserProfile {
   pontos_totais: number | null;
 }
 
+export const DEPARTMENTS = [
+  'Financeiro',
+  'Administrativo',
+  'Governo',
+  'Desenvolvimento',
+  'Suporte',
+  'Comercial',
+  'Franquias/Canais',
+  'Marketing',
+] as const;
+
+export type DepartmentName = (typeof DEPARTMENTS)[number];
+
 export type MatchStatus =
   | 'pendente'
   | 'ao_vivo'
@@ -74,7 +87,7 @@ export const FUTURE_TOP3_SCORING_RULES = [
   'Campeao certo: 10 pontos',
   'Vice-campeao certo: 7 pontos',
   'Terceiro lugar certo: 5 pontos',
-  'Selecao no Top 3 em posicao errada: 3 pontos',
+  'Selecao entre as tres primeiras em posicao errada: 3 pontos',
 ] as const;
 
 export type Sprint3MatchStatus =
@@ -119,4 +132,16 @@ export interface Sprint3LeaderboardEntry {
   nome: string;
   departamento: string | null;
   total_points: number;
+}
+
+export interface Sprint3PredictionActivity {
+  prediction_id: string;
+  created_at: string;
+  updated_at: string;
+  user_id: string;
+  user_name: string;
+  match_id: string;
+  match_label: string;
+  home_score: number;
+  away_score: number;
 }

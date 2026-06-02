@@ -1,6 +1,7 @@
 import { supabase } from './supabaseClient';
 import type {
   Sprint3LeaderboardEntry,
+  Sprint3PredictionActivity,
   Sprint3MatchRecord,
   Sprint3PredictionRecord,
   Sprint3PredictionWithMatchRecord,
@@ -40,6 +41,27 @@ export async function getMatches() {
   }
 
   return (data as Sprint3MatchRecord[] | null) ?? [];
+}
+
+export async function getUserPredictionStats(userId: string) {
+  const { data, error } = await cravou().from('predictions').select('points').eq('user_id', userId);
+
+  if (error) {
+    throw error;
+  }
+
+  const rows = (data as Array<{ points: number | null }> | null) ?? [];
+
+  return rows.reduce(
+    (stats, row) => ({
+      totalPoints: stats.totalPoints + (row.points ?? 0),
+      predictionCount: stats.predictionCount + 1,
+    }),
+    {
+      totalPoints: 0,
+      predictionCount: 0,
+    },
+  );
 }
 
 export async function upsertPrediction(matchId: string, homeScore: number, awayScore: number) {
@@ -147,6 +169,67 @@ export async function getLeaderboard() {
 
     return first.nome.localeCompare(second.nome, 'pt-BR');
   });
+}
+
+export async function getRecentPredictionActivity(limit = 5) {
+  const [{ data: predictions, error: predictionsError }, { data: users, error: usersError }] = await Promise.all([
+    cravou()
+      .from('predictions')
+      .select(
+        `
+          id,
+          user_id,
+          match_id,
+          home_score,
+          away_score,
+          created_at,
+          updated_at,
+          matches:matches!inner(
+            id,
+            home_team,
+            away_team
+          )
+        `,
+      )
+      .order('updated_at', { ascending: false })
+      .limit(limit),
+    supabase.from('cravou_users').select('id, nome'),
+  ]);
+
+  if (predictionsError) {
+    throw predictionsError;
+  }
+
+  if (usersError) {
+    throw usersError;
+  }
+
+  const namesById = (((users as { id: string; nome: string | null }[] | null) ?? []).reduce<Record<string, string>>(
+    (accumulator, user) => {
+      accumulator[user.id] = user.nome ?? 'Sem nome';
+      return accumulator;
+    },
+    {},
+  ));
+
+  return (
+    ((predictions as unknown as
+      | (Sprint3PredictionRecord & {
+          matches: Array<Pick<Sprint3MatchRecord, 'id' | 'home_team' | 'away_team'>>;
+        })[]
+      | null) ?? [])
+      .map((prediction) => ({
+        prediction_id: prediction.id,
+        created_at: prediction.created_at,
+        updated_at: prediction.updated_at,
+        user_id: prediction.user_id,
+        user_name: namesById[prediction.user_id] ?? 'Sem nome',
+        match_id: prediction.match_id,
+        match_label: `${prediction.matches[0]?.home_team ?? 'Time A'} x ${prediction.matches[0]?.away_team ?? 'Time B'}`,
+        home_score: prediction.home_score,
+        away_score: prediction.away_score,
+      })) as Sprint3PredictionActivity[]
+  );
 }
 
 export async function createMatch(input: {
