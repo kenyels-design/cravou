@@ -6,26 +6,63 @@ import { formatMatchKickoff, formatMatchKickoffTime, getFlagCode } from '../lib/
 import { getMatches, getMyPredictions } from '../lib/matches';
 import type { Sprint3MatchRecord, Sprint3MatchStatus, Sprint3PredictionRecord } from '../lib/types';
 
-type MatchFilter = 'todos' | 'ao_vivo' | 'pendente' | 'finalizado';
+type MatchFilter = 'todos' | 'ao_vivo' | 'pendente' | 'finalizado' | 'sem_palpite';
 
 const filterLabels: Record<MatchFilter, string> = {
   todos: 'Todos',
   ao_vivo: 'Ao Vivo',
   pendente: 'Pendentes',
   finalizado: 'Encerrados',
+  sem_palpite: 'Sem Palpite',
 };
 
-function groupMatchesByRound(matches: Sprint3MatchRecord[]) {
-  return matches.reduce<Record<string, Sprint3MatchRecord[]>>((groups, match) => {
-    groups[match.round] ??= [];
-    groups[match.round].push(match);
-    return groups;
-  }, {});
+function getRoundDeadline(matches: Sprint3MatchRecord[]) {
+  const firstMatchTime = matches.reduce<number | null>((earliest, match) => {
+    const matchTime = new Date(match.match_time).getTime();
+
+    if (Number.isNaN(matchTime)) {
+      return earliest;
+    }
+
+    if (earliest == null || matchTime < earliest) {
+      return matchTime;
+    }
+
+    return earliest;
+  }, null);
+
+  if (firstMatchTime == null) {
+    return null;
+  }
+
+  return firstMatchTime - 60 * 60 * 1000;
 }
 
-function matchesFilter(match: Sprint3MatchRecord, filter: MatchFilter) {
+function groupMatchesByRound(matches: Sprint3MatchRecord[]) {
+  const groups = matches.reduce<Record<string, Sprint3MatchRecord[]>>((accumulator, match) => {
+    accumulator[match.round] ??= [];
+    accumulator[match.round].push(match);
+    return accumulator;
+  }, {});
+
+  return Object.entries(groups).map(([round, roundMatches]) => ({
+    round,
+    matches: roundMatches,
+    deadline: getRoundDeadline(roundMatches),
+  }));
+}
+
+function matchesFilter(
+  match: Sprint3MatchRecord,
+  filter: MatchFilter,
+  predictions: Record<string, Sprint3PredictionRecord>,
+) {
   if (filter === 'todos') {
     return true;
+  }
+
+  if (filter === 'sem_palpite') {
+    return match.status === 'pendente' && !predictions[match.id];
   }
 
   if (filter === 'finalizado') {
@@ -96,6 +133,21 @@ function realScoreText(match: Sprint3MatchRecord) {
   return `${match.home_score} x ${match.away_score}`;
 }
 
+function roundClosingLabel(deadline: number | null, now: number) {
+  if (deadline == null) {
+    return null;
+  }
+
+  const diffMs = deadline - now;
+
+  if (diffMs <= 0) {
+    return 'Encerrado para apostas';
+  }
+
+  const hoursLeft = Math.ceil(diffMs / (1000 * 60 * 60));
+  return `Fecha em ${hoursLeft} hora${hoursLeft === 1 ? '' : 's'}`;
+}
+
 export default function Matches() {
   const { user } = useAuth();
   const [matches, setMatches] = useState<Sprint3MatchRecord[]>([]);
@@ -104,6 +156,7 @@ export default function Matches() {
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<MatchFilter>('todos');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
 
   const loadData = useCallback(async () => {
     if (!user) {
@@ -140,9 +193,19 @@ export default function Matches() {
     void loadData();
   }, [loadData]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 60000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
   const groupedMatches = useMemo(
-    () => groupMatchesByRound(matches.filter((match) => matchesFilter(match, activeFilter))),
-    [activeFilter, matches],
+    () => groupMatchesByRound(matches.filter((match) => matchesFilter(match, activeFilter, predictions))),
+    [activeFilter, matches, predictions],
   );
   const pendingMatchesWithoutPrediction = useMemo(
     () => matches.filter((match) => match.status === 'pendente' && !predictions[match.id]),
@@ -154,14 +217,14 @@ export default function Matches() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-4">
-        <header className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-5">
+        <header className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414]">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Jogos</p>
-              <h1 className="mt-3 text-3xl font-bold uppercase tracking-wide text-white">Painel de confrontos</h1>
-              <p className="mt-3 max-w-3xl text-sm leading-6 text-gray-400">
+              <h1 className="mt-3 text-3xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">Painel de confrontos</h1>
+              <p className="mt-3 max-w-3xl text-sm leading-6 text-zinc-600 dark:text-gray-400">
                 Explore os jogos da Copa, acompanhe o status da rodada e deixe seus palpites enquanto as partidas ainda
                 estiverem pendentes.
               </p>
@@ -190,7 +253,7 @@ export default function Matches() {
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                   isActive
                     ? 'bg-[#CCFF00] text-black'
-                    : 'border border-[#2A2A2A] bg-transparent text-gray-400 hover:text-white',
+                    : 'border border-[#E0E0E0] bg-transparent text-zinc-600 hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:text-gray-400 dark:hover:text-white',
                 ].join(' ')}
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -204,29 +267,44 @@ export default function Matches() {
 
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
         {loading ? (
-          <div className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-300">
+          <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
             Carregando jogos e palpites...
           </div>
         ) : Object.keys(groupedMatches).length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-400">
+          <div className="rounded-[16px] border border-dashed border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-500 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
             Nenhum jogo encontrado para este filtro.
           </div>
         ) : (
           <div className="space-y-6">
-            {Object.entries(groupedMatches).map(([round, roundMatches]) => (
+            {groupedMatches.map(({ deadline, matches: roundMatches, round }) => (
               <section className="space-y-4" key={round}>
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-gray-500">Rodada</p>
                     <h2 className="mt-1 text-2xl font-bold uppercase tracking-wide text-white">{round}</h2>
                   </div>
-                  <p className="text-xs uppercase tracking-wide text-gray-500">{roundMatches.length} jogos</p>
+                  <div className="text-right">
+                    <p className="text-xs uppercase tracking-wide text-gray-500">{roundMatches.length} jogos</p>
+                    {deadline != null ? (
+                      <span
+                        className={`mt-2 inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${
+                          now >= deadline
+                            ? 'border border-[#FF007F] bg-[#2A101A] text-[#FF007F]'
+                            : 'border border-[#2A2A2A] bg-[#141414] text-[#CCFF00]'
+                        }`}
+                      >
+                        {roundClosingLabel(deadline, now)}
+                      </span>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   {roundMatches.map((match) => {
                     const prediction = predictions[match.id] ?? null;
                     const showResolvedData = match.status === 'ao_vivo' || match.status === 'finalizado';
+                    const bettingClosedForRound = deadline != null && now >= deadline;
+                    const canQuickOpenMatch = match.status === 'pendente' && !bettingClosedForRound;
 
                     return (
                       <article
@@ -322,14 +400,18 @@ export default function Matches() {
                         {match.status === 'pendente' ? (
                           <div className={prediction ? 'mt-5' : 'mt-4'}>
                             <button
-                              className="inline-flex items-center rounded-full border border-[#2A2A2A] bg-[#1C1C1C] px-4 py-2 text-sm font-bold uppercase tracking-wide text-gray-300"
+                              className="inline-flex items-center rounded-full border border-[#2A2A2A] bg-[#1C1C1C] px-4 py-2 text-sm font-bold uppercase tracking-wide text-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
+                              disabled={!canQuickOpenMatch}
                               onClick={(event) => {
                                 event.stopPropagation();
+                                if (!canQuickOpenMatch) {
+                                  return;
+                                }
                                 navigateToMatch(match.id);
                               }}
                               type="button"
                             >
-                              {prediction ? 'Editar' : 'Palpitar'}
+                              {bettingClosedForRound ? 'Encerrado' : prediction ? 'Editar' : 'Palpitar'}
                             </button>
                           </div>
                         ) : match.status === 'ao_vivo' ? (

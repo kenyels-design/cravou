@@ -86,26 +86,45 @@ export default function MyPredictions() {
     void loadPredictions();
   }, [loadPredictions]);
 
+  const safePredictions = useMemo(
+    () =>
+      predictions
+        .map((prediction) => {
+          const match = prediction.matches;
+
+          if (!match) {
+            return null;
+          }
+
+          return {
+            ...prediction,
+            matches: match,
+          };
+        })
+        .filter((prediction): prediction is Sprint3PredictionWithMatchRecord => prediction !== null),
+    [predictions],
+  );
+
   const filteredPredictions = useMemo(
-    () => predictions.filter((prediction) => matchesFilter(prediction, activeFilter)),
-    [activeFilter, predictions],
+    () => safePredictions.filter((prediction) => matchesFilter(prediction, activeFilter)),
+    [activeFilter, safePredictions],
   );
 
   const stats = useMemo(() => {
-    const hits = predictions.filter((prediction) => predictionStatus(prediction) === 'acerto').length;
-    const misses = predictions.filter((prediction) => predictionStatus(prediction) === 'erro').length;
+    const hits = safePredictions.filter((prediction) => predictionStatus(prediction) === 'acerto').length;
+    const misses = safePredictions.filter((prediction) => predictionStatus(prediction) === 'erro').length;
 
     return { hits, misses };
-  }, [predictions]);
+  }, [safePredictions]);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-5">
-        <header className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-5">
+        <header className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414]">
           <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#CCFF00]">Historico</p>
-              <h2 className="mt-2 text-2xl font-bold text-white">Meus Palpites</h2>
+              <h2 className="mt-2 text-2xl font-bold text-[#0A0A0A] dark:text-white">Meus Palpites</h2>
             </div>
 
             <div className="text-sm font-semibold">
@@ -126,7 +145,7 @@ export default function MyPredictions() {
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                   isActive
                     ? 'bg-[#CCFF00] text-black'
-                    : 'border border-[#2A2A2A] bg-transparent text-gray-400 hover:text-white',
+                    : 'border border-[#E0E0E0] bg-transparent text-zinc-600 hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:text-gray-400 dark:hover:text-white',
                 ].join(' ')}
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -141,11 +160,11 @@ export default function MyPredictions() {
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
 
         {loading ? (
-          <div className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-300">
+          <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
             Carregando seus palpites...
           </div>
         ) : filteredPredictions.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-400">
+          <div className="rounded-[16px] border border-dashed border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-500 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
             Nenhum palpite encontrado para este filtro.
           </div>
         ) : (

@@ -156,9 +156,9 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-5xl space-y-5">
-        <a className="inline-flex items-center text-sm text-gray-400 transition hover:text-white" href="#jogos">
+        <a className="inline-flex items-center text-sm text-zinc-500 transition hover:text-[#0A0A0A] dark:text-gray-400 dark:hover:text-white" href="#jogos">
           ← Voltar
         </a>
 
@@ -166,16 +166,16 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
         {successMessage ? <FeedbackBanner message={successMessage} tone="success" /> : null}
 
         {loading ? (
-          <div className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-300">
+          <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
             Carregando jogo...
           </div>
         ) : !match ? (
-          <div className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-300">
+          <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
             Jogo nao encontrado.
           </div>
         ) : (
           <>
-            <section className="relative overflow-hidden rounded-[20px] border border-[#2A2A2A] bg-[#141414] p-6">
+            <section className="relative overflow-hidden rounded-[20px] border border-[#E0E0E0] bg-white p-6 dark:border-[#2A2A2A] dark:bg-[#141414]">
               <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_30%,rgba(12,53,26,0.42),transparent_35%),radial-gradient(circle_at_80%_30%,rgba(42,42,42,0.42),transparent_36%)] opacity-30 blur-3xl" />
               <div className="relative">
                 <div className="flex justify-center">
@@ -187,7 +187,7 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
                 <div className="mt-8 grid items-center gap-6 md:grid-cols-[1fr_auto_1fr]">
                   <div className="flex flex-col items-center text-center">
                     {renderFlag(match.home_flag, initials(match.home_team))}
-                    <p className="mt-4 text-2xl font-bold uppercase tracking-wide text-white">{match.home_team}</p>
+                    <p className="mt-4 text-2xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">{match.home_team}</p>
                   </div>
 
                   <div className="text-center">
@@ -199,13 +199,13 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
 
                   <div className="flex flex-col items-center text-center">
                     {renderFlag(match.away_flag, initials(match.away_team))}
-                    <p className="mt-4 text-2xl font-bold uppercase tracking-wide text-white">{match.away_team}</p>
+                    <p className="mt-4 text-2xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">{match.away_team}</p>
                   </div>
                 </div>
               </div>
             </section>
 
-            <section className="rounded-2xl bg-[#1C1C1C] p-4">
+            <section className="rounded-2xl bg-[#FAFAFA] p-4 dark:bg-[#1C1C1C]">
               {prediction && canEdit && !isEditing ? (
                 <div className="space-y-4">
                   <div className="flex items-start justify-between gap-4">

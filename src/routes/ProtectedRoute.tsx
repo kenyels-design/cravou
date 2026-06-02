@@ -10,9 +10,9 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
 
   if (authLoading || (user && profileLoading)) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-background px-4 text-white">
-        <div className="rounded-bento border border-white/10 bg-white/5 px-8 py-7 text-center shadow-glow-primary backdrop-blur-xl">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-white/10 border-t-primary" />
+      <div className="flex min-h-screen items-center justify-center bg-[#F5F5F5] px-4 text-[#0A0A0A] dark:bg-background dark:text-white">
+        <div className="rounded-bento border border-[#E0E0E0] bg-white px-8 py-7 text-center shadow-glow-primary dark:border-white/10 dark:bg-white/5 dark:backdrop-blur-xl">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-[#E0E0E0] border-t-primary dark:border-white/10" />
           <p className="text-xs font-semibold uppercase tracking-[0.3em] text-primary">Sincronizando perfil</p>
         </div>
       </div>
@@ -24,13 +24,13 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background px-4 text-white">
-      <div className="max-w-md rounded-bento-lg border border-secondary/25 bg-white/5 p-8 text-center shadow-glow-secondary backdrop-blur-2xl">
+    <div className="flex min-h-screen items-center justify-center bg-[#F5F5F5] px-4 text-[#0A0A0A] dark:bg-background dark:text-white">
+      <div className="max-w-md rounded-bento-lg border border-secondary/25 bg-white p-8 text-center shadow-glow-secondary dark:bg-white/5 dark:backdrop-blur-2xl">
         <p className="text-xs font-semibold uppercase tracking-[0.3em] text-secondary">Acesso bloqueado</p>
-        <h2 className="mt-4 text-2xl font-black uppercase tracking-[0.08em] text-white">
+        <h2 className="mt-4 text-2xl font-black uppercase tracking-[0.08em] text-[#0A0A0A] dark:text-white">
           Perfil nao encontrado
         </h2>
-        <p className="mt-3 text-sm leading-6 text-zinc-300">
+        <p className="mt-3 text-sm leading-6 text-zinc-600 dark:text-zinc-300">
           Sua sessao existe, mas o perfil em <code>cravou_users</code> nao foi localizado. Entre novamente ou fale com a administracao para revisar o cadastro.
         </p>
         <button

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AuthError } from '@supabase/supabase-js';
 import { Button } from '../components/ui/Button';
+import ThemeToggle from '../components/ThemeToggle';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { InputField, SelectField } from '../components/ui/InputField';
 import { useAuth } from '../context/AuthContext';
@@ -163,27 +164,28 @@ export default function Profile() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-5xl space-y-5">
         {logoutError ? <FeedbackBanner message={logoutError} tone="error" /> : null}
         {statsError ? <FeedbackBanner message={statsError} tone="error" /> : null}
 
-        <section className="rounded-2xl border border-[#2A2A2A] bg-[#141414] p-6">
+        <section className="rounded-2xl border border-[#E0E0E0] bg-white p-6 dark:border-[#2A2A2A] dark:bg-[#141414]">
           <div className="flex flex-col gap-5 lg:flex-row lg:items-center">
             <div className="flex items-center gap-4">
-              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#CCFF00] bg-[#2A2A2A] text-2xl font-bold text-white">
+              <div className="flex h-20 w-20 items-center justify-center rounded-full border-4 border-[#CCFF00] bg-[#EFEFEF] text-2xl font-bold text-[#0A0A0A] dark:bg-[#2A2A2A] dark:text-white">
                 {avatarInitials}
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Colaborador</p>
-                <p className="text-xl font-bold text-white">{profile?.nome ?? 'Colaborador Camerite'}</p>
-                <p className="text-sm text-gray-300">{normalizeDepartmentName(profile?.departamento ?? null) ?? 'Sem departamento'}</p>
-                <p className="break-all text-sm text-gray-400">{user?.email ?? 'Sem e-mail'}</p>
+                <p className="text-xl font-bold text-[#0A0A0A] dark:text-white">{profile?.nome ?? 'Colaborador Camerite'}</p>
+                <p className="text-sm text-zinc-600 dark:text-gray-300">{normalizeDepartmentName(profile?.departamento ?? null) ?? 'Sem departamento'}</p>
+                <p className="break-all text-sm text-zinc-500 dark:text-gray-400">{user?.email ?? 'Sem e-mail'}</p>
               </div>
             </div>
 
             {!isEditing ? (
-              <div className="lg:ml-auto">
+              <div className="flex flex-col gap-3 lg:ml-auto lg:flex-row">
+                <ThemeToggle />
                 <Button
                   className="w-full bg-[#CCFF00] text-black shadow-none hover:bg-[#CCFF00]/90 lg:w-auto"
                   onClick={() => {
@@ -199,7 +201,7 @@ export default function Profile() {
           </div>
 
           {isEditing ? (
-            <div className="mt-6 rounded-2xl border border-[#2A2A2A] bg-[#101010] p-4">
+            <div className="mt-6 rounded-2xl border border-[#E0E0E0] bg-[#FAFAFA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
               <div className="grid gap-4 md:grid-cols-2">
                 <InputField
                   autoComplete="name"
@@ -250,14 +252,14 @@ export default function Profile() {
         </section>
 
         <section className="grid gap-4 md:grid-cols-2">
-          <article className="rounded-2xl border border-[#2A2A2A] bg-[#141414] p-6">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Pontuacao total</p>
+          <article className="rounded-2xl border border-[#E0E0E0] bg-white p-6 dark:border-[#2A2A2A] dark:bg-[#141414]">
+            <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-400">Pontuacao total</p>
             <p className="mt-3 text-5xl font-bold text-[#CCFF00]">{statsLoading ? '...' : stats.totalPoints}</p>
           </article>
 
-          <article className="rounded-2xl border border-[#2A2A2A] bg-[#141414] p-6">
-            <p className="text-xs font-bold uppercase tracking-wide text-gray-400">Palpites feitos</p>
-            <p className="mt-3 text-5xl font-bold text-white">{statsLoading ? '...' : stats.predictionCount}</p>
+          <article className="rounded-2xl border border-[#E0E0E0] bg-white p-6 dark:border-[#2A2A2A] dark:bg-[#141414]">
+            <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-400">Palpites feitos</p>
+            <p className="mt-3 text-5xl font-bold text-[#0A0A0A] dark:text-white">{statsLoading ? '...' : stats.predictionCount}</p>
           </article>
         </section>
 

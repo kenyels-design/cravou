@@ -108,15 +108,15 @@ export default function Ranking() {
   const rest = visibleEntries.slice(3);
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-5">
-        <header className="flex flex-col gap-4 rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-5 md:flex-row md:items-end md:justify-between">
+        <header className="flex flex-col gap-4 rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414] md:flex-row md:items-end md:justify-between">
           <div>
             <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Ranking</p>
-            <h2 className="mt-2 text-2xl font-bold text-white">Classificacao da rodada</h2>
+            <h2 className="mt-2 text-2xl font-bold text-[#0A0A0A] dark:text-white">Classificacao da rodada</h2>
           </div>
 
-          <div className="flex rounded-full bg-[#141414] p-1">
+          <div className="flex rounded-full bg-[#F5F5F5] p-1 dark:bg-[#141414]">
             {([
               ['geral', 'Geral'],
               ['departamento', 'Departamento'],
@@ -126,7 +126,7 @@ export default function Ranking() {
               return (
                 <button
                   className={`rounded-full px-4 py-1 text-sm font-bold transition ${
-                    isActive ? 'bg-[#CCFF00] text-black' : 'text-gray-400'
+                    isActive ? 'bg-[#CCFF00] text-black' : 'text-zinc-600 dark:text-gray-400'
                   }`}
                   key={value}
                   onClick={() => setMode(value)}
@@ -142,16 +142,16 @@ export default function Ranking() {
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
 
         {loading ? (
-          <div className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-300">
+          <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
             Carregando ranking...
           </div>
         ) : visibleEntries.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-400">
+          <div className="rounded-[16px] border border-dashed border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-500 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
             Ainda nao ha pontuacao consolidada para exibir.
           </div>
         ) : (
           <>
-            <section className="rounded-[16px] border border-[#2A2A2A] bg-[#101010] p-6">
+            <section className="rounded-[16px] border border-[#E0E0E0] bg-[#FAFAFA] p-6 dark:border-[#2A2A2A] dark:bg-[#101010]">
               <div className="flex items-end justify-center gap-4">
                 {podium[1] ? <PodiumCard entry={podium[1]} position={2} /> : null}
                 {podium[0] ? <PodiumCard entry={podium[0]} position={1} /> : null}
@@ -159,7 +159,7 @@ export default function Ranking() {
               </div>
             </section>
 
-            <section className="rounded-[16px] border border-[#2A2A2A] bg-[#141414] p-4">
+            <section className="rounded-[16px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
               {rest.length > 0 ? (
                 rest.map((entry, index) => {
                   const isCurrentUser = user?.id === entry.user_id;

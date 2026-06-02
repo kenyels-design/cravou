@@ -12,7 +12,7 @@ const variantClasses = {
   secondary:
     'bg-secondary text-white shadow-glow-secondary hover:bg-secondary/90 focus-visible:ring-secondary/70',
   ghost:
-    'bg-white/5 text-white hover:bg-white/10 focus-visible:ring-white/40',
+    'border border-[#E0E0E0] bg-white text-[#0A0A0A] hover:bg-[#F5F5F5] focus-visible:ring-[#0A0A0A]/20 dark:border-white/10 dark:bg-white/5 dark:text-white dark:hover:bg-white/10 dark:focus-visible:ring-white/40',
 };
 
 export function Button({

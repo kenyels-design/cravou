@@ -19,7 +19,7 @@ export function AuthShell({ badge, children, footer, subtitle, title }: AuthShel
           <section className="hidden min-h-[620px] rounded-bento-lg border border-white/10 bg-white/5 p-8 shadow-[0_24px_80px_rgba(0,0,0,0.45)] backdrop-blur-xl lg:flex lg:flex-col lg:justify-between">
             <div className="space-y-5">
               <span className="inline-flex w-fit rounded-pill border border-primary/20 bg-primary/10 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-primary">
-                Cravou!
+                Camerite na Copa!
               </span>
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="rounded-bento border border-white/10 bg-black/20 p-5">

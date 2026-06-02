@@ -4,7 +4,7 @@ interface FeedbackBannerProps {
 }
 
 const toneClasses = {
-  error: 'border-rose-400/40 bg-rose-500/10 text-rose-200',
+  error: 'border-rose-400/40 bg-rose-500/10 text-rose-700 dark:text-rose-200',
   success: 'border-primary/30 bg-primary/10 text-primary',
   info: 'border-secondary/30 bg-secondary/10 text-secondary',
 };

@@ -74,7 +74,7 @@ export default function Login() {
   return (
     <AuthShell
       badge="Acesso interno"
-      title="Cravou!"
+      title="Camerite na Copa!"
       subtitle="Entre com sua conta corporativa para acompanhar os jogos, registrar seus palpites e ver sua pontuacao."
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">

@@ -112,7 +112,7 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
   };
 
   return (
-    <div className="fixed inset-0 z-[70] bg-[#0A0A0A] text-white">
+    <div className="fixed inset-0 z-[70] bg-[#F5F5F5] text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white">
       <div className="mx-auto flex min-h-screen w-full max-w-4xl flex-col px-4 pb-8 pt-6 md:px-8">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -121,7 +121,7 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
           </div>
           <button
             aria-label="Fechar modo rapido"
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#2A2A2A] bg-[#141414] text-xl text-white transition hover:bg-[#1C1C1C]"
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-[#E0E0E0] bg-white text-xl text-[#0A0A0A] transition hover:bg-[#F5F5F5] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-white dark:hover:bg-[#1C1C1C]"
             onClick={onClose}
             type="button"
           >
@@ -132,10 +132,10 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
         <div className="mt-6 flex-1">
           {isComplete ? (
             <div className="flex h-full items-center justify-center">
-              <div className="w-full max-w-2xl rounded-[24px] border border-[#2A2A2A] bg-[#141414] p-8 text-center">
+              <div className="w-full max-w-2xl rounded-[24px] border border-[#E0E0E0] bg-white p-8 text-center dark:border-[#2A2A2A] dark:bg-[#141414]">
                 <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Concluido</p>
-                <h2 className="mt-4 text-3xl font-bold uppercase tracking-wide text-white">Tudo certo por aqui</h2>
-                <p className="mt-4 text-lg text-gray-300">{savedCount} palpites salvos no modo rapido.</p>
+                <h2 className="mt-4 text-3xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">Tudo certo por aqui</h2>
+                <p className="mt-4 text-lg text-zinc-600 dark:text-gray-300">{savedCount} palpites salvos no modo rapido.</p>
                 <button
                   className="mt-8 inline-flex min-h-12 items-center justify-center rounded-full bg-[#CCFF00] px-6 py-3 text-sm font-bold uppercase tracking-wide text-black transition hover:bg-[#CCFF00]/90"
                   onClick={onClose}
@@ -147,8 +147,8 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
             </div>
           ) : currentMatch ? (
             <div className="flex h-full items-center justify-center">
-              <div className="w-full max-w-2xl rounded-[24px] border border-[#2A2A2A] bg-[#141414] p-6 md:p-8">
-                <div className="rounded-full border border-[#2A2A2A] bg-[#101010] px-4 py-2 text-center text-sm text-gray-300">
+              <div className="w-full max-w-2xl rounded-[24px] border border-[#E0E0E0] bg-white p-6 md:p-8 dark:border-[#2A2A2A] dark:bg-[#141414]">
+                <div className="rounded-full border border-[#E0E0E0] bg-[#FAFAFA] px-4 py-2 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#101010] dark:text-gray-300">
                   {formatMatchKickoff(currentMatch.match_time)}
                 </div>
 
@@ -157,7 +157,7 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
                     <div className="mx-auto flex justify-center">
                       {renderFlag(currentMatch.home_flag, initials(currentMatch.home_team))}
                     </div>
-                    <p className="mt-4 text-lg font-bold uppercase tracking-wide text-white">{currentMatch.home_team}</p>
+                    <p className="mt-4 text-lg font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">{currentMatch.home_team}</p>
                   </div>
 
                   <div className="text-center">
@@ -168,15 +168,15 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
                     <div className="mx-auto flex justify-center">
                       {renderFlag(currentMatch.away_flag, initials(currentMatch.away_team))}
                     </div>
-                    <p className="mt-4 text-lg font-bold uppercase tracking-wide text-white">{currentMatch.away_team}</p>
+                    <p className="mt-4 text-lg font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">{currentMatch.away_team}</p>
                   </div>
                 </div>
 
                 <div className="mt-8 grid gap-4 sm:grid-cols-[1fr_auto_1fr]">
-                  <label className="rounded-2xl border border-[#2A2A2A] bg-[#101010] p-4">
-                    <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Casa</span>
+                  <label className="rounded-2xl border border-[#E0E0E0] bg-[#FAFAFA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
+                    <span className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Casa</span>
                     <input
-                      className="mt-3 h-14 w-full rounded-2xl border border-[#2A2A2A] bg-[#141414] px-4 text-center text-3xl font-extrabold text-white outline-none transition focus:border-[#CCFF00]"
+                      className="mt-3 h-14 w-full rounded-2xl border border-[#E0E0E0] bg-white px-4 text-center text-3xl font-extrabold text-[#0A0A0A] outline-none transition focus:border-[#CCFF00] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-white"
                       inputMode="numeric"
                       min="0"
                       onChange={(event) => setHomeScore(event.target.value)}
@@ -187,10 +187,10 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
 
                   <div className="hidden items-center justify-center text-3xl font-extrabold text-gray-500 sm:flex">x</div>
 
-                  <label className="rounded-2xl border border-[#2A2A2A] bg-[#101010] p-4">
-                    <span className="text-xs font-bold uppercase tracking-wide text-gray-500">Fora</span>
+                  <label className="rounded-2xl border border-[#E0E0E0] bg-[#FAFAFA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
+                    <span className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Fora</span>
                     <input
-                      className="mt-3 h-14 w-full rounded-2xl border border-[#2A2A2A] bg-[#141414] px-4 text-center text-3xl font-extrabold text-white outline-none transition focus:border-[#CCFF00]"
+                      className="mt-3 h-14 w-full rounded-2xl border border-[#E0E0E0] bg-white px-4 text-center text-3xl font-extrabold text-[#0A0A0A] outline-none transition focus:border-[#CCFF00] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-white"
                       inputMode="numeric"
                       min="0"
                       onChange={(event) => setAwayScore(event.target.value)}
@@ -204,7 +204,7 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
 
                 <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-between">
                   <button
-                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#2A2A2A] bg-transparent px-5 py-3 text-sm font-bold uppercase tracking-wide text-gray-300 transition hover:bg-[#1C1C1C] hover:text-white"
+                    className="inline-flex min-h-12 items-center justify-center rounded-full border border-[#E0E0E0] bg-transparent px-5 py-3 text-sm font-bold uppercase tracking-wide text-zinc-600 transition hover:bg-[#F5F5F5] hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:text-gray-300 dark:hover:bg-[#1C1C1C] dark:hover:text-white"
                     disabled={saving}
                     onClick={handleSkip}
                     type="button"
