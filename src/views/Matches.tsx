@@ -63,7 +63,7 @@ function groupMatchesByRound(matches: Array<Sprint3MatchRecord | null | undefine
 function matchesFilter(
   match: Sprint3MatchRecord | null | undefined,
   filter: MatchFilter,
-  predictions: Record<string, Sprint3PredictionRecord>,
+  predictions: Record<string, Sprint3PredictionRecord> | null | undefined,
 ) {
   if (!match) {
     return false;
@@ -74,14 +74,14 @@ function matchesFilter(
   }
 
   if (filter === 'sem_palpite') {
-    return match.status === 'pendente' && !predictions[match.id];
+    return match?.status === 'pendente' && !predictions?.[match?.id];
   }
 
   if (filter === 'finalizado') {
-    return match.status === 'finalizado' || match.status === 'aguardando_resultado';
+    return match?.status === 'finalizado' || match?.status === 'aguardando_resultado';
   }
 
-  return match.status === filter;
+  return match?.status === filter;
 }
 
 function statusLabel(status: Sprint3MatchStatus) {
@@ -125,7 +125,7 @@ function initials(name: string) {
     .join('');
 }
 
-function cardClass(status: Sprint3MatchStatus) {
+function cardClass(status: Sprint3MatchStatus | null | undefined) {
   if (status === 'ao_vivo') {
     return 'bg-[#0D2B0D] border border-[#1A4A1A]';
   }
@@ -225,7 +225,7 @@ export default function Matches() {
     [activeFilter, predictions, safeMatches],
   );
   const pendingMatchesWithoutPrediction = useMemo(
-    () => safeMatches.filter((match) => match?.status === 'pendente' && !predictions[match.id]),
+    () => safeMatches.filter((match) => match?.status === 'pendente' && !predictions?.[match?.id]),
     [predictions, safeMatches],
   );
 
@@ -322,14 +322,15 @@ export default function Matches() {
                       return null;
                     }
 
-                    const prediction = predictions[match.id] ?? null;
-                    const showResolvedData = match.status === 'ao_vivo' || match.status === 'finalizado';
+                    const prediction = predictions?.[match?.id] ?? null;
+                    const matchStatus = match?.status;
+                    const showResolvedData = matchStatus === 'ao_vivo' || matchStatus === 'finalizado';
                     const bettingClosedForRound = deadline != null && now >= deadline;
-                    const canQuickOpenMatch = match?.status === 'pendente' && !bettingClosedForRound;
+                    const canQuickOpenMatch = matchStatus === 'pendente' && !bettingClosedForRound;
 
                     return (
                       <article
-                        className={`cursor-pointer rounded-[16px] p-5 transition hover:-translate-y-0.5 ${cardClass(match.status)}`}
+                        className={`cursor-pointer rounded-[16px] p-5 transition hover:-translate-y-0.5 ${cardClass(matchStatus)}`}
                         key={match.id}
                         onClick={() => navigateToMatch(match.id)}
                         onKeyDown={(event) => {
@@ -344,21 +345,21 @@ export default function Matches() {
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <p className="text-xs uppercase tracking-wide text-gray-500">{match.round}</p>
-                            {match.status === 'pendente' ? (
+                            {matchStatus === 'pendente' ? (
                               <p className="mt-2 text-xs text-gray-400">{formatMatchKickoff(match.match_time)}</p>
                             ) : null}
                           </div>
 
                           <span
                             className={`rounded-full px-2 py-1 text-xs font-bold uppercase tracking-wide ${
-                              match.status === 'ao_vivo'
+                              matchStatus === 'ao_vivo'
                                 ? 'bg-[#FF007F] text-white'
-                                : match.status === 'pendente'
+                                : matchStatus === 'pendente'
                                   ? 'border border-[#2A2A2A] text-gray-400'
                                   : 'border border-[#1A1A1A] text-gray-400'
                             }`}
                           >
-                            {statusLabel(match.status)}
+                            {statusLabel(matchStatus ?? 'finalizado')}
                           </span>
                         </div>
 
@@ -371,14 +372,14 @@ export default function Matches() {
                           <div className="text-center">
                             <p
                               className={`text-4xl font-extrabold ${
-                                match.status === 'ao_vivo'
+                                matchStatus === 'ao_vivo'
                                   ? 'text-[#CCFF00]'
-                                  : match.status === 'pendente'
+                                  : matchStatus === 'pendente'
                                     ? 'text-white'
                                     : 'text-gray-400'
                               }`}
                             >
-                              {match.status === 'pendente'
+                              {matchStatus === 'pendente'
                                 ? formatMatchKickoffTime(match.match_time)
                                 : realScoreText(match)}
                             </p>
@@ -418,7 +419,7 @@ export default function Matches() {
                           </div>
                         ) : null}
 
-                        {match.status === 'pendente' ? (
+                        {matchStatus === 'pendente' ? (
                           <div className={prediction ? 'mt-5' : 'mt-4'}>
                             <button
                               className="inline-flex items-center rounded-full border border-[#2A2A2A] bg-[#1C1C1C] px-4 py-2 text-sm font-bold uppercase tracking-wide text-gray-300 disabled:cursor-not-allowed disabled:opacity-50"
@@ -435,7 +436,7 @@ export default function Matches() {
                               {bettingClosedForRound ? 'Encerrado' : prediction ? 'Editar' : 'Palpitar'}
                             </button>
                           </div>
-                        ) : match.status === 'ao_vivo' ? (
+                        ) : matchStatus === 'ao_vivo' ? (
                           <div className={prediction ? 'mt-5' : 'mt-4'}>
                             <button
                               className="inline-flex items-center gap-2 rounded-full bg-[#CCFF00] px-4 py-2 text-sm font-bold uppercase tracking-wide text-black"

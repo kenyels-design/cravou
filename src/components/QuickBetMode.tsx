@@ -55,8 +55,12 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
     setSavedCount(0);
   }, [matches]);
 
-  const totalMatches = matches.length;
-  const currentMatch = matches[currentIndex] ?? null;
+  const safeMatches = useMemo(
+    () => (matches ?? []).filter((match): match is Sprint3MatchRecord => Boolean(match)),
+    [matches],
+  );
+  const totalMatches = safeMatches.length;
+  const currentMatch = safeMatches[currentIndex] ?? null;
   const isComplete = currentIndex >= totalMatches;
   const progressLabel = useMemo(() => {
     if (totalMatches === 0) {
