@@ -16,8 +16,12 @@ const filterLabels: Record<MatchFilter, string> = {
   sem_palpite: 'Sem Palpite',
 };
 
-function getRoundDeadline(matches: Sprint3MatchRecord[]) {
+function getRoundDeadline(matches: Array<Sprint3MatchRecord | null | undefined>) {
   const firstMatchTime = matches.reduce<number | null>((earliest, match) => {
+    if (!match) {
+      return earliest;
+    }
+
     const matchTime = new Date(match.match_time).getTime();
 
     if (Number.isNaN(matchTime)) {
@@ -38,8 +42,12 @@ function getRoundDeadline(matches: Sprint3MatchRecord[]) {
   return firstMatchTime - 60 * 60 * 1000;
 }
 
-function groupMatchesByRound(matches: Sprint3MatchRecord[]) {
+function groupMatchesByRound(matches: Array<Sprint3MatchRecord | null | undefined>) {
   const groups = matches.reduce<Record<string, Sprint3MatchRecord[]>>((accumulator, match) => {
+    if (!match) {
+      return accumulator;
+    }
+
     accumulator[match.round] ??= [];
     accumulator[match.round].push(match);
     return accumulator;
@@ -53,10 +61,14 @@ function groupMatchesByRound(matches: Sprint3MatchRecord[]) {
 }
 
 function matchesFilter(
-  match: Sprint3MatchRecord,
+  match: Sprint3MatchRecord | null | undefined,
   filter: MatchFilter,
   predictions: Record<string, Sprint3PredictionRecord>,
 ) {
+  if (!match) {
+    return false;
+  }
+
   if (filter === 'todos') {
     return true;
   }
@@ -203,13 +215,18 @@ export default function Matches() {
     };
   }, []);
 
+  const safeMatches = useMemo(
+    () => (matches ?? []).filter((match): match is Sprint3MatchRecord => Boolean(match)),
+    [matches],
+  );
+
   const groupedMatches = useMemo(
-    () => groupMatchesByRound(matches.filter((match) => matchesFilter(match, activeFilter, predictions))),
-    [activeFilter, matches, predictions],
+    () => groupMatchesByRound(safeMatches.filter((match) => matchesFilter(match, activeFilter, predictions))),
+    [activeFilter, predictions, safeMatches],
   );
   const pendingMatchesWithoutPrediction = useMemo(
-    () => matches.filter((match) => match.status === 'pendente' && !predictions[match.id]),
-    [matches, predictions],
+    () => safeMatches.filter((match) => match?.status === 'pendente' && !predictions[match.id]),
+    [predictions, safeMatches],
   );
 
   const navigateToMatch = (matchId: string) => {
@@ -270,7 +287,7 @@ export default function Matches() {
           <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
             Carregando jogos e palpites...
           </div>
-        ) : Object.keys(groupedMatches).length === 0 ? (
+        ) : groupedMatches.length === 0 ? (
           <div className="rounded-[16px] border border-dashed border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-500 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
             Nenhum jogo encontrado para este filtro.
           </div>
@@ -301,10 +318,14 @@ export default function Matches() {
 
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                   {roundMatches.map((match) => {
+                    if (!match) {
+                      return null;
+                    }
+
                     const prediction = predictions[match.id] ?? null;
                     const showResolvedData = match.status === 'ao_vivo' || match.status === 'finalizado';
                     const bettingClosedForRound = deadline != null && now >= deadline;
-                    const canQuickOpenMatch = match.status === 'pendente' && !bettingClosedForRound;
+                    const canQuickOpenMatch = match?.status === 'pendente' && !bettingClosedForRound;
 
                     return (
                       <article
