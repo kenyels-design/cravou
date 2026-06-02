@@ -14,11 +14,11 @@ const filterLabels: Record<PredictionFilter, string> = {
 };
 
 function predictionStatus(prediction: Sprint3PredictionWithMatchRecord) {
-  if (prediction.matches.status === 'ao_vivo') {
+  if (prediction.matches?.status === 'ao_vivo') {
     return 'ao_vivo';
   }
 
-  if (prediction.matches.status === 'pendente') {
+  if (prediction.matches?.status === 'pendente') {
     return 'pendente';
   }
 

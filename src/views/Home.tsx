@@ -111,15 +111,29 @@ export default function Home() {
     void loadDashboard();
   }, [loadDashboard]);
 
-  const liveMatch = useMemo(() => matches.find((match) => match.status === 'ao_vivo') ?? null, [matches]);
-  const nextMatch = useMemo(
-    () => matches.find((match) => match.status === 'pendente' && new Date(match.match_time).getTime() > Date.now()) ?? null,
+  const safeMatches = useMemo(
+    () => (matches ?? []).filter((match): match is Sprint3MatchRecord => Boolean(match)),
     [matches],
+  );
+  const safePredictions = useMemo(
+    () =>
+      (predictions ?? []).filter(
+        (prediction): prediction is Sprint3PredictionWithMatchRecord => Boolean(prediction?.matches),
+      ),
+    [predictions],
+  );
+
+  const liveMatch = useMemo(() => safeMatches.find((match) => match?.status === 'ao_vivo') ?? null, [safeMatches]);
+  const nextMatch = useMemo(
+    () =>
+      safeMatches.find((match) => match?.status === 'pendente' && new Date(match.match_time).getTime() > Date.now()) ??
+      null,
+    [safeMatches],
   );
 
   const myStats = useMemo(() => {
-    const totalPoints = predictions.reduce((sum, prediction) => sum + (prediction.points ?? 0), 0);
-    const resolvedPredictions = predictions.filter((prediction) => prediction.matches.status === 'finalizado');
+    const totalPoints = safePredictions.reduce((sum, prediction) => sum + (prediction.points ?? 0), 0);
+    const resolvedPredictions = safePredictions.filter((prediction) => prediction.matches?.status === 'finalizado');
     const hits = resolvedPredictions.filter((prediction) => (prediction.points ?? 0) > 0).length;
     const exactScores = resolvedPredictions.filter((prediction) => prediction.points === 10).length;
     const position = leaderboard.findIndex((entry) => entry.user_id === user?.id);
@@ -132,7 +146,7 @@ export default function Home() {
       exactScores,
       successRate,
     };
-  }, [leaderboard, predictions, user?.id]);
+  }, [leaderboard, safePredictions, user?.id]);
 
   const quickRanking = useMemo(() => leaderboard.slice(0, 3), [leaderboard]);
 
