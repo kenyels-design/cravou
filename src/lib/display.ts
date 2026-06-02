@@ -26,7 +26,13 @@ export function getFlagCode(flag: string | null) {
     return null;
   }
 
-  const normalizedCode = flag.trim().toLowerCase();
+  const sanitizedFlag = flag.replace(/[\s\u200B-\u200D\uFEFF]/g, '');
+
+  if (!sanitizedFlag || sanitizedFlag === '🏳') {
+    return null;
+  }
+
+  const normalizedCode = sanitizedFlag.toLowerCase();
   return /^[a-z]{2}$/.test(normalizedCode) ? normalizedCode : null;
 }
 
