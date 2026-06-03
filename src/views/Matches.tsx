@@ -249,7 +249,7 @@ export default function Matches() {
 
             {pendingMatchesWithoutPrediction.length > 0 ? (
               <button
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-[#CCFF00] px-5 py-3 text-sm font-bold uppercase tracking-wide text-black transition hover:bg-[#CCFF00]/90"
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-[#CCFF00] px-5 py-3 text-sm font-bold uppercase tracking-wide text-black transition hover:scale-105 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black active:scale-95"
                 onClick={() => setQuickBetMatches(pendingMatchesWithoutPrediction)}
                 type="button"
               >

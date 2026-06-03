@@ -32,16 +32,23 @@ export default function Profile() {
   const [formError, setFormError] = useState<string | null>(null);
   const [fullName, setFullName] = useState('');
   const [department, setDepartment] = useState('');
+  const [displayName, setDisplayName] = useState('');
+  const [displayDepartment, setDisplayDepartment] = useState('');
   const [stats, setStats] = useState({
     totalPoints: 0,
     predictionCount: 0,
   });
 
-  const avatarInitials = useMemo(() => initials(profile?.nome ?? user?.email ?? 'Camerite'), [profile?.nome, user?.email]);
+  const avatarInitials = useMemo(() => initials(displayName || profile?.nome || user?.email || 'Camerite'), [displayName, profile?.nome, user?.email]);
 
   useEffect(() => {
-    setFullName(profile?.nome ?? '');
-    setDepartment(normalizeDepartmentName(profile?.departamento ?? null) ?? '');
+    const normalizedDepartment = normalizeDepartmentName(profile?.departamento ?? null) ?? '';
+    const nextName = profile?.nome ?? '';
+
+    setFullName(nextName);
+    setDepartment(normalizedDepartment);
+    setDisplayName(nextName);
+    setDisplayDepartment(normalizedDepartment);
   }, [profile?.departamento, profile?.nome]);
 
   useEffect(() => {
@@ -108,8 +115,8 @@ export default function Profile() {
   };
 
   const handleCancelEdit = () => {
-    setFullName(profile?.nome ?? '');
-    setDepartment(normalizeDepartmentName(profile?.departamento ?? null) ?? '');
+    setFullName(displayName);
+    setDepartment(displayDepartment);
     setFormError(null);
     setIsEditing(false);
   };
@@ -162,6 +169,10 @@ export default function Profile() {
       }
 
       await refreshProfile();
+      setFullName(trimmedName);
+      setDepartment(department);
+      setDisplayName(trimmedName);
+      setDisplayDepartment(department);
       setIsEditing(false);
       addToast('Perfil atualizado com sucesso.', 'success');
     } catch (error) {
@@ -191,8 +202,8 @@ export default function Profile() {
               </div>
               <div className="space-y-2">
                 <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Colaborador</p>
-                <p className="text-xl font-bold text-[#0A0A0A] dark:text-white">{profile?.nome ?? 'Colaborador Camerite'}</p>
-                <p className="text-sm text-[#555566] dark:text-gray-300">{normalizeDepartmentName(profile?.departamento ?? null) ?? 'Sem departamento'}</p>
+                <p className="text-xl font-bold text-[#0A0A0A] dark:text-white">{displayName || 'Colaborador Camerite'}</p>
+                <p className="text-sm text-[#555566] dark:text-gray-300">{displayDepartment || 'Sem departamento'}</p>
                 <p className="break-all text-sm text-[#555566] dark:text-gray-400">{user?.email ?? 'Sem e-mail'}</p>
               </div>
             </div>
