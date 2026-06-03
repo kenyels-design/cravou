@@ -253,7 +253,7 @@ export default function Matches() {
                 onClick={() => setQuickBetMatches(pendingMatchesWithoutPrediction)}
                 type="button"
               >
-                ⚡ Modo Rapido
+                {'\u26A1'} Modo Rapido
               </button>
             ) : null}
           </div>
@@ -446,7 +446,7 @@ export default function Matches() {
                               }}
                               type="button"
                             >
-                              <span aria-hidden="true">⚡</span>
+                              <span aria-hidden="true">{'\u26A1'}</span>
                               Palpitar
                             </button>
                           </div>
