@@ -199,18 +199,20 @@ function AppRouter() {
 
   return (
     <ProtectedRoute>
-      <div
-        className={`min-h-screen bg-[#F5F5F5] pt-0 text-[#0A0A0A] transition-all duration-200 ease-out dark:bg-[#0A0A0A] dark:text-white md:pt-20 ${
-          isTransitioning ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100'
-        }`}
-      >
-        {displayedNormalizedRoute === '#home' ? <Home /> : null}
-        {displayedNormalizedRoute === '#jogos' && !selectedMatchId ? <Matches /> : null}
-        {selectedMatchId ? <MatchDetail matchId={selectedMatchId} /> : null}
-        {displayedNormalizedRoute === '#meus-palpites' ? <MyPredictions /> : null}
-        {displayedNormalizedRoute === '#ranking' ? <Ranking /> : null}
-        {displayedNormalizedRoute === '#perfil' ? <Profile /> : null}
-        {displayedNormalizedRoute === '#admin' ? <Admin /> : null}
+      <div className="min-h-screen bg-[#F5F5F5] pt-0 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:pt-20">
+        <div
+          className={`transition-all duration-200 ease-out ${
+            isTransitioning ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100'
+          }`}
+        >
+          {displayedNormalizedRoute === '#home' ? <Home /> : null}
+          {displayedNormalizedRoute === '#jogos' && !selectedMatchId ? <Matches /> : null}
+          {selectedMatchId ? <MatchDetail matchId={selectedMatchId} /> : null}
+          {displayedNormalizedRoute === '#meus-palpites' ? <MyPredictions /> : null}
+          {displayedNormalizedRoute === '#ranking' ? <Ranking /> : null}
+          {displayedNormalizedRoute === '#perfil' ? <Profile /> : null}
+          {displayedNormalizedRoute === '#admin' ? <Admin /> : null}
+        </div>
         <BottomNavigation currentRoute={selectedMatchId ? '#jogos' : displayedNormalizedRoute} />
       </div>
     </ProtectedRoute>
