@@ -92,11 +92,7 @@ export async function upsertPrediction(matchId: string, homeScore: number, awayS
 
 export async function getMyPredictions() {
   const userId = await getCurrentUserId();
-
-  const { data, error } = await cravou()
-    .from('predictions')
-    .select(
-      `
+  const predictionSelectQuery = `
         id,
         user_id,
         match_id,
@@ -120,19 +116,49 @@ export async function getMyPredictions() {
           created_at,
           updated_at
         )
-      `,
-    )
+      `;
+
+  console.log('[getMyPredictions] query', {
+    schema: 'cravou',
+    table: 'predictions',
+    filter: { user_id: userId },
+    select: predictionSelectQuery,
+  });
+
+  const { data, error } = await cravou()
+    .from('predictions')
+    .select(predictionSelectQuery)
     .eq('user_id', userId);
+
+  console.log('[getMyPredictions] response', {
+    userId,
+    error,
+    data,
+  });
 
   if (error) {
     throw error;
   }
 
-  return ((data as unknown as (Sprint3PredictionRecord & { matches: Sprint3MatchRecord[] })[] | null) ?? []).map(
-    (prediction) => ({
-      ...prediction,
-      matches: prediction.matches[0],
-    }),
+  return (
+    ((data as unknown as
+      | (Sprint3PredictionRecord & {
+          matches: Sprint3MatchRecord | Sprint3MatchRecord[] | null;
+        })[]
+      | null) ?? [])
+      .map((prediction) => {
+        const match = Array.isArray(prediction.matches)
+          ? prediction.matches[0] ?? null
+          : prediction.matches;
+
+        return match
+          ? {
+              ...prediction,
+              matches: match,
+            }
+          : null;
+      })
+      .filter((prediction): prediction is Sprint3PredictionWithMatchRecord => prediction !== null)
   );
 }
 
