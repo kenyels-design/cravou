@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
@@ -82,9 +82,14 @@ function normalizeRoute(route: Route): PublicRoute | ProtectedRouteHash {
 
 function AppRouter() {
   const [currentRoute, setCurrentRoute] = useState<Route>(resolveRoute());
+  const [displayedRoute, setDisplayedRoute] = useState<Route>(resolveRoute());
+  const [isTransitioning, setIsTransitioning] = useState(false);
   const { authLoading, profile, profileLoading, user } = useAuth();
   const normalizedRoute = normalizeRoute(currentRoute);
-  const selectedMatchId = isMatchRoute(currentRoute) ? currentRoute.slice('#match/'.length) : null;
+  const displayedNormalizedRoute = normalizeRoute(displayedRoute);
+  const selectedMatchId = isMatchRoute(displayedRoute) ? displayedRoute.slice('#match/'.length) : null;
+  const exitTimeoutRef = useRef<number | null>(null);
+  const enterTimeoutRef = useRef<number | null>(null);
 
   useEffect(() => {
     const handleRouteChange = () => {
@@ -101,10 +106,46 @@ function AppRouter() {
   }, []);
 
   useEffect(() => {
+    return () => {
+      if (exitTimeoutRef.current != null) {
+        window.clearTimeout(exitTimeoutRef.current);
+      }
+
+      if (enterTimeoutRef.current != null) {
+        window.clearTimeout(enterTimeoutRef.current);
+      }
+    };
+  }, []);
+
+  useEffect(() => {
     if (!isMatchRoute(currentRoute) && currentRoute !== normalizedRoute) {
       window.location.hash = normalizedRoute;
     }
   }, [currentRoute, normalizedRoute]);
+
+  useEffect(() => {
+    if (currentRoute === displayedRoute) {
+      return;
+    }
+
+    if (exitTimeoutRef.current != null) {
+      window.clearTimeout(exitTimeoutRef.current);
+    }
+
+    if (enterTimeoutRef.current != null) {
+      window.clearTimeout(enterTimeoutRef.current);
+    }
+
+    setIsTransitioning(true);
+
+    exitTimeoutRef.current = window.setTimeout(() => {
+      setDisplayedRoute(currentRoute);
+
+      enterTimeoutRef.current = window.setTimeout(() => {
+        setIsTransitioning(false);
+      }, 200);
+    }, 150);
+  }, [currentRoute, displayedRoute]);
 
   useEffect(() => {
     if (authLoading || (user && profileLoading)) {
@@ -144,29 +185,33 @@ function AppRouter() {
     );
   }
 
-  if (normalizedRoute === '#login') {
+  if (displayedNormalizedRoute === '#login') {
     return <Login />;
   }
 
-  if (normalizedRoute === '#cadastro') {
+  if (displayedNormalizedRoute === '#cadastro') {
     return <Register />;
   }
 
-  if (normalizedRoute === '#esqueci') {
+  if (displayedNormalizedRoute === '#esqueci') {
     return <ForgotPassword />;
   }
 
   return (
     <ProtectedRoute>
-      <div className="min-h-screen bg-[#F5F5F5] pt-0 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:pt-20">
-        {normalizedRoute === '#home' ? <Home /> : null}
-        {normalizedRoute === '#jogos' && !selectedMatchId ? <Matches /> : null}
+      <div
+        className={`min-h-screen bg-[#F5F5F5] pt-0 text-[#0A0A0A] transition-all duration-200 ease-out dark:bg-[#0A0A0A] dark:text-white md:pt-20 ${
+          isTransitioning ? 'translate-y-2 opacity-0' : 'translate-y-0 opacity-100'
+        }`}
+      >
+        {displayedNormalizedRoute === '#home' ? <Home /> : null}
+        {displayedNormalizedRoute === '#jogos' && !selectedMatchId ? <Matches /> : null}
         {selectedMatchId ? <MatchDetail matchId={selectedMatchId} /> : null}
-        {normalizedRoute === '#meus-palpites' ? <MyPredictions /> : null}
-        {normalizedRoute === '#ranking' ? <Ranking /> : null}
-        {normalizedRoute === '#perfil' ? <Profile /> : null}
-        {normalizedRoute === '#admin' ? <Admin /> : null}
-        <BottomNavigation currentRoute={selectedMatchId ? '#jogos' : normalizedRoute} />
+        {displayedNormalizedRoute === '#meus-palpites' ? <MyPredictions /> : null}
+        {displayedNormalizedRoute === '#ranking' ? <Ranking /> : null}
+        {displayedNormalizedRoute === '#perfil' ? <Profile /> : null}
+        {displayedNormalizedRoute === '#admin' ? <Admin /> : null}
+        <BottomNavigation currentRoute={selectedMatchId ? '#jogos' : displayedNormalizedRoute} />
       </div>
     </ProtectedRoute>
   );

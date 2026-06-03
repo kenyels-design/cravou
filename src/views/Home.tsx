@@ -241,7 +241,16 @@ export default function Home() {
             Carregando tela inicial...
           </div>
         ) : (
-          <div className="grid gap-5 lg:grid-cols-2">
+          <>
+            <div className="flex justify-center md:justify-start">
+              <img
+                alt="Camerite na Copa"
+                className="h-16 w-auto object-contain"
+                src="/logos/Camerite_vertical.png"
+              />
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-2">
             <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Resumo pessoal</p>
               <h1 className="mt-4 text-3xl font-black tracking-tight text-white">
@@ -391,7 +400,8 @@ export default function Home() {
                 )}
               </div>
             </section>
-          </div>
+            </div>
+          </>
         )}
       </div>
     </div>
