@@ -232,12 +232,12 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
+    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-5">
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
 
         {loading ? (
-          <div className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-300">
+          <div className="rounded-[28px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
             Carregando tela inicial...
           </div>
         ) : (
@@ -251,57 +251,57 @@ export default function Home() {
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
-            <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+            <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
               <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Resumo pessoal</p>
-              <h1 className="mt-4 text-3xl font-black tracking-tight text-white">
+              <h1 className="mt-4 text-3xl font-black tracking-tight text-[#0A0A0A] dark:text-white">
                 Ola, {profile?.nome ?? user?.email?.split('@')[0] ?? 'Camerite'}!
               </h1>
-              <p className="mt-2 text-sm text-gray-400">
+              <p className="mt-2 text-sm text-zinc-600 dark:text-gray-400">
                 Seu painel rapido para acompanhar pontuacao, proximos palpites e sua posicao na disputa.
               </p>
 
               <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <article className="rounded-[22px] border border-[#2A2A2A] bg-[#101010] p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Pontuacao total</p>
+                <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
+                  <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Pontuacao total</p>
                   <p className="mt-3 text-3xl font-black text-[#CCFF00]">{myStats.totalPoints}</p>
                 </article>
-                <article className="rounded-[22px] border border-[#2A2A2A] bg-[#101010] p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Posicao no ranking</p>
-                  <p className="mt-3 text-3xl font-black text-white">
+                <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
+                  <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Posicao no ranking</p>
+                  <p className="mt-3 text-3xl font-black text-[#0A0A0A] dark:text-white">
                     {myStats.rankingPosition ? `${myStats.rankingPosition}o` : '--'}
                   </p>
                 </article>
-                <article className="rounded-[22px] border border-[#2A2A2A] bg-[#101010] p-4">
-                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Palpites feitos</p>
-                  <p className="mt-3 text-3xl font-black text-white">{myStats.totalPredictions}</p>
+                <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
+                  <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Palpites feitos</p>
+                  <p className="mt-3 text-3xl font-black text-[#0A0A0A] dark:text-white">{myStats.totalPredictions}</p>
                 </article>
               </div>
 
-              <div className="mt-5 rounded-[24px] border border-[#2A2A2A] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#101010] p-5">
-                <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Proximo jogo + deadline</p>
+              <div className="mt-5 rounded-[24px] border border-[#E0E0E0] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#FFFFFF] p-5 dark:border-[#2A2A2A] dark:bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#141414]">
+                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Proximo jogo + deadline</p>
                 {nextMatch ? (
                   <>
-                    <h2 className="mt-3 text-2xl font-black text-white">
+                    <h2 className="mt-3 text-2xl font-black text-[#0A0A0A] dark:text-white">
                       {nextMatch.home_team} x {nextMatch.away_team}
                     </h2>
-                    <p className="mt-2 text-sm text-gray-400">{formatMatchKickoff(nextMatch.match_time)}</p>
+                    <p className="mt-2 text-sm text-zinc-600 dark:text-gray-400">{formatMatchKickoff(nextMatch.match_time)}</p>
                     <p className="mt-4 inline-flex rounded-full border border-[#FF007F]/30 bg-[#FF007F]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#FF66B2]">
                       {deadlineLabel(nextMatch.match_time)}
                     </p>
                   </>
                 ) : (
-                  <p className="mt-3 text-sm text-gray-400">Nenhum jogo pendente encontrado no momento.</p>
+                  <p className="mt-3 text-sm text-zinc-600 dark:text-gray-400">Nenhum jogo pendente encontrado no momento.</p>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+            <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#FF007F]">Movimentacoes</p>
-                  <h2 className="mt-2 text-2xl font-black text-white">Ultimas atividades</h2>
+                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Ultimas atividades</h2>
                 </div>
-                <span className="rounded-full border border-[#2A2A2A] bg-[#101010] px-3 py-1 text-xs font-semibold text-gray-400">
+                <span className="rounded-full border border-[#E0E0E0] bg-white px-3 py-1 text-xs font-semibold text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
                   {feedItems.length} itens
                 </span>
               </div>
@@ -310,27 +310,27 @@ export default function Home() {
                 {feedItems.length > 0 ? (
                   feedItems.map((item) => (
                     <article
-                      className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-[22px] border border-[#2A2A2A] bg-[#101010] px-4 py-3"
+                      className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-[22px] border border-[#E0E0E0] bg-white px-4 py-3 dark:border-[#2A2A2A] dark:bg-[#141414]"
                       key={item.id}
                     >
-                      <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-[#141414] text-sm font-black ${item.accent}`}>
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-[#F5F5F5] text-sm font-black dark:bg-[#0A0A0A] ${item.accent}`}>
                         {item.icon}
                       </div>
-                      <p className="pt-1 text-sm leading-6 text-gray-200">{item.text}</p>
-                      <span className="pt-1 text-xs text-gray-500">{relativeTime(item.timestamp)}</span>
+                      <p className="pt-1 text-sm leading-6 text-[#0A0A0A] dark:text-white">{item.text}</p>
+                      <span className="pt-1 text-xs text-zinc-500 dark:text-gray-500">{relativeTime(item.timestamp)}</span>
                     </article>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-400">Ainda nao ha atividades recentes para mostrar.</p>
+                  <p className="text-sm text-zinc-600 dark:text-gray-400">Ainda nao ha atividades recentes para mostrar.</p>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+            <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Ranking</p>
-                  <h2 className="mt-2 text-2xl font-black text-white">Top 3 da rodada</h2>
+                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Top 3 da rodada</h2>
                 </div>
                 <a
                   className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#CCFF00] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#CCFF00] transition-all duration-150 hover:bg-[#CCFF00] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
@@ -344,30 +344,30 @@ export default function Home() {
                 {topThree.length > 0 ? (
                   topThree.map((entry, index) => (
                     <article
-                      className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border border-[#2A2A2A] bg-[#101010] px-4 py-3"
+                      className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border border-[#E0E0E0] bg-white px-4 py-3 dark:border-[#2A2A2A] dark:bg-[#141414]"
                       key={entry.user_id}
                     >
-                      <span className={`text-lg font-black ${index === 0 ? 'text-[#CCFF00]' : 'text-white'}`}>{index + 1}</span>
+                      <span className={`text-lg font-black ${index === 0 ? 'text-[#CCFF00]' : 'text-[#0A0A0A] dark:text-white'}`}>{index + 1}</span>
                       <div className="min-w-0">
-                        <p className="truncate text-sm font-semibold text-white">{entry.nome}</p>
+                        <p className="truncate text-sm font-semibold text-[#0A0A0A] dark:text-white">{entry.nome}</p>
                       </div>
                       <span className="text-sm font-black text-[#CCFF00]">{entry.total_points} pts</span>
                     </article>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-400">Ainda nao ha ranking consolidado.</p>
+                  <p className="text-sm text-zinc-600 dark:text-gray-400">Ainda nao ha ranking consolidado.</p>
                 )}
               </div>
             </section>
 
-            <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+            <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#FF007F]">Agenda</p>
-                  <h2 className="mt-2 text-2xl font-black text-white">Proximos jogos</h2>
+                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Proximos jogos</h2>
                 </div>
                 <a
-                  className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#2A2A2A] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white transition-all duration-150 hover:bg-[#2A2A2A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
+                  className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#E0E0E0] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#0A0A0A] transition-all duration-150 hover:bg-[#2A2A2A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 dark:border-[#2A2A2A] dark:text-white dark:hover:bg-[#2A2A2A]"
                   href="#jogos"
                 >
                   Ver todos os jogos
@@ -378,16 +378,16 @@ export default function Home() {
                 {nextPendingMatches.slice(0, 3).length > 0 ? (
                   nextPendingMatches.slice(0, 3).map((match) => (
                     <article
-                      className="rounded-[22px] border border-[#2A2A2A] bg-[#101010] px-4 py-4"
+                      className="rounded-[22px] border border-[#E0E0E0] bg-white px-4 py-4 dark:border-[#2A2A2A] dark:bg-[#141414]"
                       key={match.id}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-gray-500">{match.round}</p>
-                          <h3 className="mt-2 text-lg font-black text-white">
+                          <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">{match.round}</p>
+                          <h3 className="mt-2 text-lg font-black text-[#0A0A0A] dark:text-white">
                             {match.home_team} x {match.away_team}
                           </h3>
-                          <p className="mt-2 text-sm text-gray-400">{formatMatchKickoff(match.match_time)}</p>
+                          <p className="mt-2 text-sm text-zinc-600 dark:text-gray-400">{formatMatchKickoff(match.match_time)}</p>
                         </div>
                         <span className="rounded-full border border-[#CCFF00]/20 bg-[#CCFF00]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-[#CCFF00]">
                           Pendente
@@ -396,7 +396,7 @@ export default function Home() {
                     </article>
                   ))
                 ) : (
-                  <p className="text-sm text-gray-400">Nao ha proximos jogos pendentes para exibir.</p>
+                  <p className="text-sm text-zinc-600 dark:text-gray-400">Nao ha proximos jogos pendentes para exibir.</p>
                 )}
               </div>
             </section>
