@@ -1,295 +1,397 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAuth } from '../context/AuthContext';
-import { getLeaderboard, getMatches, getMyPredictions, getRecentPredictionActivity } from '../lib/matches';
+import { formatMatchKickoff } from '../lib/display';
+import {
+  getLeaderboard,
+  getMatches,
+  getMyPredictions,
+  getRecentPredictionActivity,
+  getRecentRankingMovements,
+} from '../lib/matches';
 import type {
   Sprint3LeaderboardEntry,
   Sprint3MatchRecord,
   Sprint3PredictionActivity,
   Sprint3PredictionWithMatchRecord,
+  Sprint3RankingMovementActivity,
 } from '../lib/types';
 
-function initials(name: string) {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-}
+type HomeFeedItem =
+  | {
+      id: string;
+      kind: 'prediction';
+      timestamp: string;
+      icon: string;
+      accent: string;
+      text: string;
+    }
+  | {
+      id: string;
+      kind: 'movement';
+      timestamp: string;
+      icon: string;
+      accent: string;
+      text: string;
+    };
 
-function formatRelativeTime(value: string) {
-  const diffMs = Date.now() - new Date(value).getTime();
-  const diffMinutes = Math.max(1, Math.floor(diffMs / 60000));
+function relativeTime(timestamp: string) {
+  const diffMs = Date.now() - new Date(timestamp).getTime();
+
+  if (diffMs < 60000) {
+    return 'agora';
+  }
+
+  const diffMinutes = Math.floor(diffMs / 60000);
 
   if (diffMinutes < 60) {
-    return `${diffMinutes} min`;
+    return `${diffMinutes}min atras`;
   }
 
   const diffHours = Math.floor(diffMinutes / 60);
+
   if (diffHours < 24) {
-    return `${diffHours}h`;
+    return `${diffHours}h atras`;
   }
 
-  return `${Math.floor(diffHours / 24)}d`;
+  const diffDays = Math.floor(diffHours / 24);
+  return `${diffDays}d atras`;
 }
 
-function formatCountdown(value: string) {
-  const diffMs = new Date(value).getTime() - Date.now();
+function deadlineLabel(matchTime: string) {
+  const diffMs = new Date(matchTime).getTime() - 60 * 60 * 1000 - Date.now();
 
   if (diffMs <= 0) {
-    return 'Comeca em instantes';
+    return 'Apostas encerram em instantes';
   }
 
-  const totalMinutes = Math.floor(diffMs / 60000);
-  const days = Math.floor(totalMinutes / 1440);
-  const hours = Math.floor((totalMinutes % 1440) / 60);
-  const minutes = totalMinutes % 60;
+  const diffMinutes = Math.floor(diffMs / 60000);
 
-  if (days > 0) {
-    return `${days}d ${hours}h`;
+  if (diffMinutes < 60) {
+    return `Apostas ate ${diffMinutes}min`;
   }
 
-  return `${hours}h ${minutes}min`;
+  const hours = Math.floor(diffMinutes / 60);
+  const minutes = diffMinutes % 60;
+
+  if (hours >= 24) {
+    const days = Math.floor(hours / 24);
+    return `Apostas ate ${days}d ${hours % 24}h`;
+  }
+
+  return `Apostas ate ${hours}h ${minutes}min`;
 }
 
-function estimatedMinute(matchTime: string) {
-  const diffMinutes = Math.floor((Date.now() - new Date(matchTime).getTime()) / 60000);
-  const boundedMinutes = Math.min(130, Math.max(1, diffMinutes));
-  return `${boundedMinutes}'`;
+function rankPosition(
+  totalsByUser: Record<string, number>,
+  namesByUser: Record<string, string>,
+  targetUserId: string,
+) {
+  const ordered = Object.keys(totalsByUser).sort((left, right) => {
+    if (totalsByUser[right] !== totalsByUser[left]) {
+      return totalsByUser[right] - totalsByUser[left];
+    }
+
+    return (namesByUser[left] ?? 'Sem nome').localeCompare(namesByUser[right] ?? 'Sem nome', 'pt-BR');
+  });
+
+  const index = ordered.indexOf(targetUserId);
+  return index >= 0 ? index + 1 : null;
 }
 
-function activityIcon(activity: Sprint3PredictionActivity) {
-  if (activity.home_score === activity.away_score) {
-    return '=';
-  }
+function buildFeedItems(
+  predictionActivity: Sprint3PredictionActivity[],
+  rankingMovements: Sprint3RankingMovementActivity[],
+  leaderboard: Sprint3LeaderboardEntry[],
+) {
+  const predictionItems: HomeFeedItem[] = predictionActivity.map((item) => ({
+    id: `prediction-${item.prediction_id}`,
+    kind: 'prediction',
+    timestamp: item.created_at,
+    icon: 'P',
+    accent: 'text-[#CCFF00]',
+    text: `${item.user_name} apostou ${item.home_score} x ${item.away_score} em ${item.match_label}`,
+  }));
 
-  return activity.home_score > activity.away_score ? 'H' : 'A';
+  const namesByUser = leaderboard.reduce<Record<string, string>>((accumulator, entry) => {
+    accumulator[entry.user_id] = entry.nome;
+    return accumulator;
+  }, {});
+
+  const rollingTotals = leaderboard.reduce<Record<string, number>>((accumulator, entry) => {
+    accumulator[entry.user_id] = entry.total_points;
+    return accumulator;
+  }, {});
+
+  const movementItems: HomeFeedItem[] = [];
+
+  rankingMovements.forEach((movement) => {
+    const currentTotal = rollingTotals[movement.user_id] ?? 0;
+    const afterRank = rankPosition(rollingTotals, namesByUser, movement.user_id);
+
+    rollingTotals[movement.user_id] = currentTotal - movement.points;
+    const beforeRank = rankPosition(rollingTotals, namesByUser, movement.user_id);
+    rollingTotals[movement.user_id] = currentTotal - movement.points;
+
+    if (afterRank != null && beforeRank != null && afterRank < beforeRank) {
+      movementItems.push({
+        id: `movement-${movement.prediction_id}`,
+        kind: 'movement',
+        timestamp: movement.updated_at,
+        icon: '#',
+        accent: 'text-[#FF007F]',
+        text: `${movement.user_name} subiu para o ${afterRank}o lugar`,
+      });
+    }
+  });
+
+  return [...predictionItems, ...movementItems]
+    .sort((left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime())
+    .slice(0, 10);
 }
 
 export default function Home() {
-  const { user } = useAuth();
+  const { profile, user } = useAuth();
   const [matches, setMatches] = useState<Sprint3MatchRecord[]>([]);
   const [predictions, setPredictions] = useState<Sprint3PredictionWithMatchRecord[]>([]);
   const [leaderboard, setLeaderboard] = useState<Sprint3LeaderboardEntry[]>([]);
-  const [activity, setActivity] = useState<Sprint3PredictionActivity[]>([]);
+  const [predictionActivity, setPredictionActivity] = useState<Sprint3PredictionActivity[]>([]);
+  const [rankingMovements, setRankingMovements] = useState<Sprint3RankingMovementActivity[]>([]);
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const loadDashboard = useCallback(async () => {
+  const loadHome = useCallback(async () => {
     setLoading(true);
     setErrorMessage(null);
 
     try {
-      const [matchRows, predictionRows, leaderboardRows, activityRows] = await Promise.all([
+      const [matchRows, predictionRows, leaderboardRows, activityRows, movementRows] = await Promise.all([
         getMatches(),
         getMyPredictions(),
         getLeaderboard(),
-        getRecentPredictionActivity(4),
+        getRecentPredictionActivity(10),
+        getRecentRankingMovements(10),
       ]);
 
       setMatches(matchRows);
       setPredictions(predictionRows);
       setLeaderboard(leaderboardRows);
-      setActivity(activityRows);
+      setPredictionActivity(activityRows);
+      setRankingMovements(movementRows);
     } catch (error) {
       const message =
         error && typeof error === 'object' && 'message' in error
           ? String(error.message)
-          : 'Nao foi possivel carregar o dashboard agora.';
+          : 'Nao foi possivel carregar a tela inicial agora.';
       setErrorMessage(message);
       setMatches([]);
       setPredictions([]);
       setLeaderboard([]);
-      setActivity([]);
+      setPredictionActivity([]);
+      setRankingMovements([]);
     } finally {
       setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadDashboard();
-  }, [loadDashboard]);
+    void loadHome();
+  }, [loadHome]);
 
   const safeMatches = useMemo(
-    () => (matches ?? []).filter((match): match is Sprint3MatchRecord => Boolean(match)),
+    () =>
+      (matches ?? [])
+        .filter((match): match is Sprint3MatchRecord => Boolean(match))
+        .sort((left, right) => new Date(left.match_time).getTime() - new Date(right.match_time).getTime()),
     [matches],
   );
-  const safePredictions = useMemo(
-    () =>
-      (predictions ?? []).filter(
-        (prediction): prediction is Sprint3PredictionWithMatchRecord => Boolean(prediction?.matches),
-      ),
-    [predictions],
-  );
 
-  const liveMatch = useMemo(() => safeMatches.find((match) => match?.status === 'ao_vivo') ?? null, [safeMatches]);
-  const nextMatch = useMemo(
+  const nextPendingMatches = useMemo(
     () =>
-      safeMatches.find((match) => match?.status === 'pendente' && new Date(match.match_time).getTime() > Date.now()) ??
-      null,
+      safeMatches.filter((match) => match.status === 'pendente' && new Date(match.match_time).getTime() > Date.now()),
     [safeMatches],
   );
 
+  const nextMatch = nextPendingMatches[0] ?? null;
+
   const myStats = useMemo(() => {
-    const totalPoints = safePredictions.reduce((sum, prediction) => sum + (prediction.points ?? 0), 0);
-    const resolvedPredictions = safePredictions.filter((prediction) => prediction.matches?.status === 'finalizado');
-    const hits = resolvedPredictions.filter((prediction) => (prediction.points ?? 0) > 0).length;
-    const exactScores = resolvedPredictions.filter((prediction) => prediction.points === 10).length;
-    const position = leaderboard.findIndex((entry) => entry.user_id === user?.id);
-    const successRate = resolvedPredictions.length > 0 ? Math.round((hits / resolvedPredictions.length) * 100) : null;
+    const totalPoints = predictions.reduce((sum, prediction) => sum + (prediction.points ?? 0), 0);
+    const rankingPosition = leaderboard.findIndex((entry) => entry.user_id === user?.id);
 
     return {
       totalPoints,
-      position: position >= 0 ? position + 1 : null,
-      hits,
-      exactScores,
-      successRate,
+      rankingPosition: rankingPosition >= 0 ? rankingPosition + 1 : null,
+      totalPredictions: predictions.length,
     };
-  }, [leaderboard, safePredictions, user?.id]);
+  }, [leaderboard, predictions, user?.id]);
 
-  const quickRanking = useMemo(() => leaderboard.slice(0, 3), [leaderboard]);
+  const topThree = useMemo(() => leaderboard.slice(0, 3), [leaderboard]);
+  const feedItems = useMemo(
+    () => buildFeedItems(predictionActivity, rankingMovements, leaderboard),
+    [leaderboard, predictionActivity, rankingMovements],
+  );
 
   return (
-    <div className="min-h-screen bg-[#F5F5F5] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
-      <div className="mx-auto max-w-6xl space-y-4">
+    <div className="min-h-screen bg-[#0A0A0A] px-4 pb-28 pt-6 text-white md:px-8 md:pb-12">
+      <div className="mx-auto max-w-6xl space-y-5">
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
 
         {loading ? (
-          <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
-            Carregando dashboard...
+          <div className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-10 text-center text-sm text-gray-300">
+            Carregando tela inicial...
           </div>
         ) : (
-          <>
-            <section className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414]">
-              <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Status da rodada</p>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Resumo pessoal</p>
+              <h1 className="mt-4 text-3xl font-black tracking-tight text-white">
+                Ola, {profile?.nome ?? user?.email?.split('@')[0] ?? 'Camerite'}!
+              </h1>
+              <p className="mt-2 text-sm text-gray-400">
+                Seu painel rapido para acompanhar pontuacao, proximos palpites e sua posicao na disputa.
+              </p>
 
-              {liveMatch ? (
-                <div className="mt-4 flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
-                  <div className="flex items-center gap-4">
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#EFEFEF] text-2xl font-bold text-[#0A0A0A] dark:bg-[#2A2A2A] dark:text-white">
-                      {initials(liveMatch.home_team)}
-                    </div>
-                    <div>
-                      <p className="text-sm text-zinc-500 dark:text-gray-400">{liveMatch.round}</p>
-                      <h1 className="text-2xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">
-                        {liveMatch.home_team} x {liveMatch.away_team}
-                      </h1>
-                    </div>
-                    <div className="flex h-20 w-20 items-center justify-center rounded-full bg-[#EFEFEF] text-2xl font-bold text-[#0A0A0A] dark:bg-[#2A2A2A] dark:text-white">
-                      {initials(liveMatch.away_team)}
-                    </div>
-                  </div>
+              <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                <article className="rounded-[22px] border border-[#2A2A2A] bg-[#101010] p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Pontuacao total</p>
+                  <p className="mt-3 text-3xl font-black text-[#CCFF00]">{myStats.totalPoints}</p>
+                </article>
+                <article className="rounded-[22px] border border-[#2A2A2A] bg-[#101010] p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Posicao no ranking</p>
+                  <p className="mt-3 text-3xl font-black text-white">
+                    {myStats.rankingPosition ? `${myStats.rankingPosition}o` : '--'}
+                  </p>
+                </article>
+                <article className="rounded-[22px] border border-[#2A2A2A] bg-[#101010] p-4">
+                  <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Palpites feitos</p>
+                  <p className="mt-3 text-3xl font-black text-white">{myStats.totalPredictions}</p>
+                </article>
+              </div>
 
-                  <div className="flex items-center gap-4">
-                    <p className="text-6xl font-extrabold text-[#CCFF00]">
-                      {liveMatch.home_score ?? 0} x {liveMatch.away_score ?? 0}
-                    </p>
-                    <div className="text-right">
-                      <span className="inline-flex items-center rounded-full bg-red-600 px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-                        <span className="mr-2 inline-block h-2 w-2 animate-pulse rounded-full bg-white" />
-                        AO VIVO
-                      </span>
-                      <p className="mt-2 text-sm text-zinc-500 dark:text-gray-400">{estimatedMinute(liveMatch.match_time)}</p>
-                    </div>
-                  </div>
-                </div>
-              ) : nextMatch ? (
-                <div className="mt-4 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                  <div>
-                    <p className="text-sm text-zinc-500 dark:text-gray-400">{nextMatch.round}</p>
-                    <h1 className="mt-2 text-3xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">
+              <div className="mt-5 rounded-[24px] border border-[#2A2A2A] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#101010] p-5">
+                <p className="text-xs uppercase tracking-[0.18em] text-gray-500">Proximo jogo + deadline</p>
+                {nextMatch ? (
+                  <>
+                    <h2 className="mt-3 text-2xl font-black text-white">
                       {nextMatch.home_team} x {nextMatch.away_team}
-                    </h1>
-                    <p className="mt-2 text-sm text-zinc-500 dark:text-gray-400">{new Date(nextMatch.match_time).toLocaleString('pt-BR')}</p>
-                  </div>
-                  <div className="rounded-[16px] border border-[#E0E0E0] bg-[#FAFAFA] px-5 py-4 dark:border-[#2A2A2A] dark:bg-[#1C1C1C]">
-                    <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Proximo jogo</p>
-                    <p className="mt-2 text-3xl font-extrabold text-[#CCFF00]">{formatCountdown(nextMatch.match_time)}</p>
-                  </div>
-                </div>
-              ) : (
-                <div className="mt-4 rounded-[16px] border border-dashed border-[#E0E0E0] bg-[#FAFAFA] p-5 text-sm text-zinc-500 dark:border-[#2A2A2A] dark:bg-[#111111] dark:text-gray-400">
-                  Nenhum jogo ao vivo ou agendado foi encontrado.
-                </div>
-              )}
-            </section>
-
-            <section className="grid gap-4 lg:grid-cols-2">
-              <article className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414]">
-                <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Estatisticas</p>
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  <div className="rounded-[16px] border border-[#E0E0E0] bg-[#FAFAFA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
-                    <p className="text-xs text-zinc-500 dark:text-gray-400">Pontos</p>
-                    <p className="mt-2 text-2xl font-bold text-[#CCFF00]">{myStats.totalPoints}</p>
-                  </div>
-                  <div className="rounded-[16px] border border-[#E0E0E0] bg-[#FAFAFA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
-                    <p className="text-xs text-zinc-500 dark:text-gray-400">Posicao</p>
-                    <p className="mt-2 text-2xl font-bold text-[#0A0A0A] dark:text-white">{myStats.position ?? '-'}</p>
-                  </div>
-                  <div className="rounded-[16px] border border-[#E0E0E0] bg-[#FAFAFA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
-                    <p className="text-xs text-zinc-500 dark:text-gray-400">Acertos</p>
-                    <p className="mt-2 text-xl font-bold text-[#0A0A0A] dark:text-white">{myStats.hits}</p>
-                  </div>
-                  <div className="rounded-[16px] border border-[#E0E0E0] bg-[#FAFAFA] p-4 dark:border-[#2A2A2A] dark:bg-[#101010]">
-                    <p className="text-xs text-zinc-500 dark:text-gray-400">Aproveitamento</p>
-                    <p className="mt-2 text-xl font-bold text-[#0A0A0A] dark:text-white">
-                      {myStats.successRate == null ? '--' : `${myStats.successRate}%`}
+                    </h2>
+                    <p className="mt-2 text-sm text-gray-400">{formatMatchKickoff(nextMatch.match_time)}</p>
+                    <p className="mt-4 inline-flex rounded-full border border-[#FF007F]/30 bg-[#FF007F]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#FF66B2]">
+                      {deadlineLabel(nextMatch.match_time)}
                     </p>
-                  </div>
-                </div>
-                <p className="mt-3 text-xs text-zinc-500 dark:text-gray-500">Placares exatos acumulados: {myStats.exactScores}</p>
-              </article>
-
-              <article className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414]">
-                <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Ranking rapido</p>
-                <div className="mt-4 space-y-3">
-                  {quickRanking.length > 0 ? (
-                    quickRanking.map((entry, index) => (
-                      <div className="flex items-center gap-3" key={entry.user_id}>
-                        <span className="w-4 text-sm text-zinc-500 dark:text-gray-500">{index + 1}</span>
-                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#EFEFEF] text-xs font-bold text-[#0A0A0A] dark:bg-[#2A2A2A] dark:text-white">
-                          {initials(entry.nome)}
-                        </div>
-                        <span className="text-sm text-[#0A0A0A] dark:text-white">{entry.nome}</span>
-                        <span className="ml-auto text-sm text-[#CCFF00]">{entry.total_points} pts</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-zinc-500 dark:text-gray-400">Ainda nao ha ranking disponivel.</p>
-                  )}
-                </div>
-                <a
-                  className="mt-3 inline-flex w-full items-center justify-center rounded-full border border-[#CCFF00] px-4 py-2 text-sm font-bold uppercase tracking-wide text-[#CCFF00]"
-                  href="#ranking"
-                >
-                  Ver tudo
-                </a>
-              </article>
-            </section>
-
-            <section className="rounded-[16px] border border-[#E0E0E0] bg-white p-5 dark:border-[#2A2A2A] dark:bg-[#141414]">
-              <p className="text-xs font-bold uppercase tracking-wide text-zinc-500 dark:text-gray-500">Ultimas movimentacoes</p>
-              <div className="mt-4 space-y-3">
-                {activity.length > 0 ? (
-                  activity.map((item) => (
-                    <div className="flex items-center gap-3" key={item.prediction_id}>
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#1C1C1C] text-sm font-bold text-[#FF007F]">
-                        {activityIcon(item)}
-                      </div>
-                      <div className="min-w-0 flex-1 text-sm text-zinc-600 dark:text-gray-300">
-                        <span className="font-bold text-[#0A0A0A] dark:text-white">{item.user_name}</span>{' '}
-                        registrou palpite em <span className="text-[#CCFF00]">{item.match_label}</span>
-                      </div>
-                      <span className="ml-auto text-xs text-zinc-500 dark:text-gray-500">{formatRelativeTime(item.updated_at)}</span>
-                    </div>
-                  ))
+                  </>
                 ) : (
-                  <p className="text-sm text-zinc-500 dark:text-gray-400">Ainda nao houve movimentacoes recentes de palpites.</p>
+                  <p className="mt-3 text-sm text-gray-400">Nenhum jogo pendente encontrado no momento.</p>
                 )}
               </div>
             </section>
-          </>
+
+            <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#FF007F]">Movimentacoes</p>
+                  <h2 className="mt-2 text-2xl font-black text-white">Ultimas atividades</h2>
+                </div>
+                <span className="rounded-full border border-[#2A2A2A] bg-[#101010] px-3 py-1 text-xs font-semibold text-gray-400">
+                  {feedItems.length} itens
+                </span>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {feedItems.length > 0 ? (
+                  feedItems.map((item) => (
+                    <article
+                      className="grid grid-cols-[40px_minmax(0,1fr)_auto] items-start gap-3 rounded-[22px] border border-[#2A2A2A] bg-[#101010] px-4 py-3"
+                      key={item.id}
+                    >
+                      <div className={`flex h-10 w-10 items-center justify-center rounded-full bg-[#141414] text-sm font-black ${item.accent}`}>
+                        {item.icon}
+                      </div>
+                      <p className="pt-1 text-sm leading-6 text-gray-200">{item.text}</p>
+                      <span className="pt-1 text-xs text-gray-500">{relativeTime(item.timestamp)}</span>
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400">Ainda nao ha atividades recentes para mostrar.</p>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Ranking</p>
+                  <h2 className="mt-2 text-2xl font-black text-white">Top 3 da rodada</h2>
+                </div>
+                <a
+                  className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#CCFF00] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#CCFF00] transition-all duration-150 hover:bg-[#CCFF00] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
+                  href="#ranking"
+                >
+                  Ver ranking completo
+                </a>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {topThree.length > 0 ? (
+                  topThree.map((entry, index) => (
+                    <article
+                      className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border border-[#2A2A2A] bg-[#101010] px-4 py-3"
+                      key={entry.user_id}
+                    >
+                      <span className={`text-lg font-black ${index === 0 ? 'text-[#CCFF00]' : 'text-white'}`}>{index + 1}</span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-white">{entry.nome}</p>
+                      </div>
+                      <span className="text-sm font-black text-[#CCFF00]">{entry.total_points} pts</span>
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400">Ainda nao ha ranking consolidado.</p>
+                )}
+              </div>
+            </section>
+
+            <section className="rounded-[28px] border border-[#2A2A2A] bg-[#141414] p-6 shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#FF007F]">Agenda</p>
+                  <h2 className="mt-2 text-2xl font-black text-white">Proximos jogos</h2>
+                </div>
+                <a
+                  className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#2A2A2A] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-white transition-all duration-150 hover:bg-[#2A2A2A] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
+                  href="#jogos"
+                >
+                  Ver todos os jogos
+                </a>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {nextPendingMatches.slice(0, 3).length > 0 ? (
+                  nextPendingMatches.slice(0, 3).map((match) => (
+                    <article
+                      className="rounded-[22px] border border-[#2A2A2A] bg-[#101010] px-4 py-4"
+                      key={match.id}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <p className="text-xs uppercase tracking-[0.18em] text-gray-500">{match.round}</p>
+                          <h3 className="mt-2 text-lg font-black text-white">
+                            {match.home_team} x {match.away_team}
+                          </h3>
+                          <p className="mt-2 text-sm text-gray-400">{formatMatchKickoff(match.match_time)}</p>
+                        </div>
+                        <span className="rounded-full border border-[#CCFF00]/20 bg-[#CCFF00]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-[#CCFF00]">
+                          Pendente
+                        </span>
+                      </div>
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-sm text-gray-400">Nao ha proximos jogos pendentes para exibir.</p>
+                )}
+              </div>
+            </section>
+          </div>
         )}
       </div>
     </div>

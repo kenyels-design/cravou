@@ -3,13 +3,12 @@ import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { getMyPredictions } from '../lib/matches';
 import type { Sprint3PredictionWithMatchRecord } from '../lib/matches';
 
-type PredictionFilter = 'todos' | 'acertos' | 'erros' | 'ao_vivo' | 'pendente';
+type PredictionFilter = 'todos' | 'acertos' | 'erros' | 'pendente';
 
 const filterLabels: Record<PredictionFilter, string> = {
   todos: 'Todos',
   acertos: 'Acertos',
   erros: 'Erros',
-  ao_vivo: 'Ao Vivo',
   pendente: 'Pendentes',
 };
 
@@ -117,6 +116,10 @@ export default function MyPredictions() {
     return { hits, misses };
   }, [safePredictions]);
 
+  const navigateToMatch = (matchId: string) => {
+    window.location.hash = `#match/${matchId}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#EEEEF2] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-5">
@@ -141,11 +144,11 @@ export default function MyPredictions() {
             return (
               <button
                 className={[
-                  'rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide transition',
+                  'cursor-pointer rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide transition-all duration-150 active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                   isActive
                     ? 'bg-[#CCFF00] text-black'
-                    : 'border border-[#D0D0D8] bg-white text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:bg-transparent dark:text-gray-400 dark:shadow-none dark:hover:text-white',
+                    : 'border border-[#D0D0D8] bg-white text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:bg-[#CCFF00]/20 hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:bg-transparent dark:text-gray-400 dark:shadow-none dark:hover:bg-[#CCFF00]/20 dark:hover:text-white',
                 ].join(' ')}
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -225,6 +228,18 @@ export default function MyPredictions() {
                     <span className="mt-4 inline-flex rounded-full bg-[#CCFF00] px-3 py-1 text-xs font-bold uppercase tracking-wide text-black">
                       Cravada!
                     </span>
+                  ) : null}
+
+                  {prediction.matches.status === 'pendente' ? (
+                    <div className="mt-4">
+                      <button
+                        className="inline-flex cursor-pointer items-center rounded-full border border-[#D0D0D8] bg-white px-4 py-2 text-sm font-bold uppercase tracking-wide text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-150 hover:bg-[#2A2A2A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 dark:border-[#2A2A2A] dark:bg-[#1C1C1C] dark:text-gray-300 dark:shadow-none"
+                        onClick={() => navigateToMatch(prediction.match_id)}
+                        type="button"
+                      >
+                        Editar
+                      </button>
+                    </div>
                   ) : null}
                 </article>
               );

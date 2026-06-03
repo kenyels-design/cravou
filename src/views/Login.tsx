@@ -73,9 +73,6 @@ export default function Login() {
 
   return (
     <AuthShell
-      badge="Acesso interno"
-      title="Camerite na Copa!"
-      subtitle="Entre com sua conta corporativa para acompanhar os jogos, registrar seus palpites e ver sua pontuacao."
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <a className="font-semibold text-primary transition hover:text-white" href="#cadastro">
@@ -108,11 +105,6 @@ export default function Login() {
           onChange={(event) => setPassword(event.target.value)}
           placeholder="Sua senha"
           required
-          rightSlot={
-            <a className="text-xs font-medium text-zinc-400 transition hover:text-primary" href="#esqueci">
-              Recuperar acesso
-            </a>
-          }
           type="password"
           value={password}
         />

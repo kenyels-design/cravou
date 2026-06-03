@@ -13,6 +13,7 @@ const mobileNavItems = [
 ];
 
 const desktopNavItems = [
+  { hash: '#home', label: 'Home' },
   { hash: '#jogos', label: 'Jogos' },
   { hash: '#meus-palpites', label: 'Meus Palpites' },
   { hash: '#ranking', label: 'Ranking' },

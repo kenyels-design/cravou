@@ -261,10 +261,10 @@ export default function Ranking() {
 
                   return (
                     <button
-                      className={`rounded-full px-4 py-2 text-[11px] font-bold tracking-[0.16em] transition md:px-5 ${
+                      className={`cursor-pointer rounded-full px-4 py-2 text-[11px] font-bold tracking-[0.16em] transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 md:px-5 ${
                         isActive
                           ? 'bg-[#CCFF00] text-black shadow-[0_0_20px_rgba(204,255,0,0.25)]'
-                          : 'text-[#555566] hover:text-[#0A0A0A] dark:text-gray-400 dark:hover:text-white'
+                          : 'text-[#555566] hover:opacity-80 hover:text-[#0A0A0A] dark:text-gray-400 dark:hover:text-white'
                       }`}
                       key={value}
                       onClick={() => setMode(value)}

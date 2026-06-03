@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 import type {
   Sprint3LeaderboardEntry,
   Sprint3PredictionActivity,
+  Sprint3RankingMovementActivity,
   Sprint3MatchRecord,
   Sprint3PredictionRecord,
   Sprint3PredictionWithMatchRecord,
@@ -208,6 +209,7 @@ export async function getRecentPredictionActivity(limit = 5) {
           match_id,
           home_score,
           away_score,
+          points,
           created_at,
           updated_at,
           matches:matches!inner(
@@ -217,7 +219,7 @@ export async function getRecentPredictionActivity(limit = 5) {
           )
         `,
       )
-      .order('updated_at', { ascending: false })
+      .order('created_at', { ascending: false })
       .limit(limit),
     supabase.from('cravou_users').select('id, nome'),
   ]);
@@ -241,21 +243,68 @@ export async function getRecentPredictionActivity(limit = 5) {
   return (
     ((predictions as unknown as
       | (Sprint3PredictionRecord & {
-          matches: Array<Pick<Sprint3MatchRecord, 'id' | 'home_team' | 'away_team'>>;
+          matches:
+            | Pick<Sprint3MatchRecord, 'id' | 'home_team' | 'away_team'>
+            | Array<Pick<Sprint3MatchRecord, 'id' | 'home_team' | 'away_team'>>;
         })[]
       | null) ?? [])
-      .map((prediction) => ({
-        prediction_id: prediction.id,
-        created_at: prediction.created_at,
-        updated_at: prediction.updated_at,
-        user_id: prediction.user_id,
-        user_name: namesById[prediction.user_id] ?? 'Sem nome',
-        match_id: prediction.match_id,
-        match_label: `${prediction.matches[0]?.home_team ?? 'Time A'} x ${prediction.matches[0]?.away_team ?? 'Time B'}`,
-        home_score: prediction.home_score,
-        away_score: prediction.away_score,
-      })) as Sprint3PredictionActivity[]
+      .map((prediction) => {
+        const match = Array.isArray(prediction.matches)
+          ? prediction.matches[0] ?? null
+          : prediction.matches;
+
+        return {
+          prediction_id: prediction.id,
+          created_at: prediction.created_at,
+          updated_at: prediction.updated_at,
+          user_id: prediction.user_id,
+          user_name: namesById[prediction.user_id] ?? 'Sem nome',
+          match_id: prediction.match_id,
+          match_label: `${match?.home_team ?? 'Time A'} x ${match?.away_team ?? 'Time B'}`,
+          home_score: prediction.home_score,
+          away_score: prediction.away_score,
+          points: prediction.points,
+        };
+      }) as Sprint3PredictionActivity[]
   );
+}
+
+export async function getRecentRankingMovements(limit = 10) {
+  const [{ data: predictions, error: predictionsError }, { data: users, error: usersError }] = await Promise.all([
+    cravou()
+      .from('predictions')
+      .select('id, user_id, points, updated_at')
+      .not('points', 'is', null)
+      .gt('points', 0)
+      .order('updated_at', { ascending: false })
+      .limit(limit),
+    supabase.from('cravou_users').select('id, nome'),
+  ]);
+
+  if (predictionsError) {
+    throw predictionsError;
+  }
+
+  if (usersError) {
+    throw usersError;
+  }
+
+  const namesById = (((users as { id: string; nome: string | null }[] | null) ?? []).reduce<Record<string, string>>(
+    (accumulator, user) => {
+      accumulator[user.id] = user.nome ?? 'Sem nome';
+      return accumulator;
+    },
+    {},
+  ));
+
+  return (((predictions as Array<Pick<Sprint3PredictionRecord, 'id' | 'user_id' | 'points' | 'updated_at'>> | null) ?? [])
+    .map((prediction) => ({
+      prediction_id: prediction.id,
+      user_id: prediction.user_id,
+      user_name: namesById[prediction.user_id] ?? 'Sem nome',
+      points: prediction.points ?? 0,
+      updated_at: prediction.updated_at,
+    })) as Sprint3RankingMovementActivity[]);
 }
 
 export async function createMatch(input: {

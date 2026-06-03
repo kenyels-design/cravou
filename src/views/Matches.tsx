@@ -249,7 +249,7 @@ export default function Matches() {
 
             {pendingMatchesWithoutPrediction.length > 0 ? (
               <button
-                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-[#CCFF00] px-5 py-3 text-sm font-bold uppercase tracking-wide text-black transition hover:scale-105 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black active:scale-95"
+                className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-[#CCFF00] px-5 py-3 text-sm font-bold uppercase tracking-wide text-black transition-all duration-150 hover:scale-105 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
                 onClick={() => setQuickBetMatches(pendingMatchesWithoutPrediction)}
                 type="button"
               >
@@ -266,11 +266,11 @@ export default function Matches() {
             return (
               <button
                 className={[
-                  'rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide transition',
+                  'cursor-pointer rounded-full px-4 py-2 text-xs font-bold uppercase tracking-wide transition-all duration-150 active:scale-95',
                   'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                   isActive
                     ? 'bg-[#CCFF00] text-black'
-                    : 'border border-[#D0D0D8] bg-white text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:bg-transparent dark:text-gray-400 dark:shadow-none dark:hover:text-white',
+                    : 'border border-[#D0D0D8] bg-white text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] hover:bg-[#CCFF00]/20 hover:text-[#0A0A0A] dark:border-[#2A2A2A] dark:bg-transparent dark:text-gray-400 dark:shadow-none dark:hover:bg-[#CCFF00]/20 dark:hover:text-white',
                 ].join(' ')}
                 key={filter}
                 onClick={() => setActiveFilter(filter)}
@@ -422,7 +422,7 @@ export default function Matches() {
                         {matchStatus === 'pendente' ? (
                           <div className={prediction ? 'mt-5' : 'mt-4'}>
                             <button
-                              className="inline-flex items-center rounded-full border border-[#D0D0D8] bg-white px-4 py-2 text-sm font-bold uppercase tracking-wide text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#2A2A2A] dark:bg-[#1C1C1C] dark:text-gray-300 dark:shadow-none"
+                              className="inline-flex cursor-pointer items-center rounded-full border border-[#D0D0D8] bg-white px-4 py-2 text-sm font-bold uppercase tracking-wide text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.05)] transition-all duration-150 hover:bg-[#2A2A2A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 dark:border-[#2A2A2A] dark:bg-[#1C1C1C] dark:text-gray-300 dark:shadow-none"
                               disabled={!canQuickOpenMatch}
                               onClick={(event) => {
                                 event.stopPropagation();
@@ -439,7 +439,7 @@ export default function Matches() {
                         ) : matchStatus === 'ao_vivo' ? (
                           <div className={prediction ? 'mt-5' : 'mt-4'}>
                             <button
-                              className="inline-flex items-center gap-2 rounded-full bg-[#CCFF00] px-4 py-2 text-sm font-bold uppercase tracking-wide text-black"
+                              className="inline-flex cursor-pointer items-center gap-2 rounded-full bg-[#CCFF00] px-4 py-2 text-sm font-bold uppercase tracking-wide text-black transition-all duration-150 hover:scale-105 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
                               onClick={(event) => {
                                 event.stopPropagation();
                                 navigateToMatch(match.id);

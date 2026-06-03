@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AuthError } from '@supabase/supabase-js';
 import { Button } from '../components/ui/Button';
-import ThemeToggle from '../components/ThemeToggle';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { InputField, SelectField } from '../components/ui/InputField';
 import { useAuth } from '../context/AuthContext';
@@ -210,9 +209,8 @@ export default function Profile() {
 
             {!isEditing ? (
               <div className="flex flex-col gap-3 lg:ml-auto lg:flex-row">
-                <ThemeToggle />
                 <Button
-                  className="w-full bg-[#CCFF00] text-black shadow-none hover:bg-[#CCFF00]/90 lg:w-auto"
+                  className="w-full cursor-pointer bg-[#CCFF00] text-black shadow-none transition-all duration-150 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 lg:w-auto"
                   onClick={() => {
                     setFormError(null);
                     setIsEditing(true);
@@ -289,7 +287,7 @@ export default function Profile() {
         </section>
 
         <button
-          className="w-full rounded-xl bg-[#FF007F] p-4 text-sm font-bold uppercase tracking-wide text-black transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+          className="w-full cursor-pointer rounded-xl bg-[#FF007F] p-4 text-sm font-bold uppercase tracking-wide text-black transition-all duration-150 hover:bg-[#FF007F]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 disabled:cursor-not-allowed disabled:opacity-60"
           disabled={logoutLoading}
           onClick={() => void handleLogout()}
           type="button"

@@ -144,4 +144,13 @@ export interface Sprint3PredictionActivity {
   match_label: string;
   home_score: number;
   away_score: number;
+  points: number | null;
+}
+
+export interface Sprint3RankingMovementActivity {
+  prediction_id: string;
+  user_id: string;
+  user_name: string;
+  points: number;
+  updated_at: string;
 }
