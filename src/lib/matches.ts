@@ -12,6 +12,22 @@ function cravou() {
   return supabase.schema('cravou');
 }
 
+function getUserDisplayName(user: { nome?: string | null; email?: string | null } | null | undefined) {
+  const nome = user?.nome?.trim();
+
+  if (nome) {
+    return nome;
+  }
+
+  const emailLocalPart = user?.email?.split('@')[0]?.trim();
+
+  if (emailLocalPart) {
+    return emailLocalPart;
+  }
+
+  return 'Usuario';
+}
+
 async function getCurrentUserId() {
   const {
     data: { user },
@@ -186,7 +202,7 @@ export async function getLeaderboard() {
 
   return (((users as { id: string; nome: string | null; departamento: string | null }[] | null) ?? []).map((user) => ({
     user_id: user.id,
-    nome: user.nome ?? 'Sem nome',
+    nome: getUserDisplayName(user),
     departamento: user.departamento,
     total_points: totals[user.id] ?? 0,
   })) as Sprint3LeaderboardEntry[]).sort((first, second) => {
@@ -199,34 +215,42 @@ export async function getLeaderboard() {
 }
 
 export async function getRecentPredictionActivity(limit = 5) {
-  const [{ data: predictions, error: predictionsError }, { data: users, error: usersError }] = await Promise.all([
-    cravou()
-      .from('predictions')
-      .select(
-        `
+  const { data: predictions, error: predictionsError } = await cravou()
+    .from('predictions')
+    .select(
+      `
+        id,
+        user_id,
+        match_id,
+        home_score,
+        away_score,
+        points,
+        created_at,
+        updated_at,
+        matches:matches!inner(
           id,
-          user_id,
-          match_id,
-          home_score,
-          away_score,
-          points,
-          created_at,
-          updated_at,
-          matches:matches!inner(
-            id,
-            home_team,
-            away_team
-          )
-        `,
-      )
-      .order('created_at', { ascending: false })
-      .limit(limit),
-    supabase.from('cravou_users').select('id, nome'),
-  ]);
+          home_team,
+          away_team
+        )
+      `,
+    )
+    .order('created_at', { ascending: false })
+    .limit(limit);
 
   if (predictionsError) {
     throw predictionsError;
   }
+
+  const userIds = Array.from(
+    new Set(
+      ((((predictions as unknown as Array<Pick<Sprint3PredictionRecord, 'user_id'>> | null) ?? []).map((prediction) => prediction.user_id))
+        .filter((userId): userId is string => Boolean(userId))),
+    ),
+  );
+
+  const { data: users, error: usersError } = userIds.length
+    ? await supabase.from('cravou_users').select('id, nome').in('id', userIds)
+    : { data: [], error: null };
 
   if (usersError) {
     throw usersError;
@@ -234,7 +258,7 @@ export async function getRecentPredictionActivity(limit = 5) {
 
   const namesById = (((users as { id: string; nome: string | null }[] | null) ?? []).reduce<Record<string, string>>(
     (accumulator, user) => {
-      accumulator[user.id] = user.nome ?? 'Sem nome';
+      accumulator[user.id] = getUserDisplayName(user);
       return accumulator;
     },
     {},
@@ -258,7 +282,7 @@ export async function getRecentPredictionActivity(limit = 5) {
           created_at: prediction.created_at,
           updated_at: prediction.updated_at,
           user_id: prediction.user_id,
-          user_name: namesById[prediction.user_id] ?? 'Sem nome',
+          user_name: namesById[prediction.user_id] ?? getUserDisplayName(null),
           match_id: prediction.match_id,
           match_label: `${match?.home_team ?? 'Time A'} x ${match?.away_team ?? 'Time B'}`,
           home_score: prediction.home_score,
@@ -291,7 +315,7 @@ export async function getRecentRankingMovements(limit = 10) {
 
   const namesById = (((users as { id: string; nome: string | null }[] | null) ?? []).reduce<Record<string, string>>(
     (accumulator, user) => {
-      accumulator[user.id] = user.nome ?? 'Sem nome';
+      accumulator[user.id] = getUserDisplayName(user);
       return accumulator;
     },
     {},
@@ -301,7 +325,7 @@ export async function getRecentRankingMovements(limit = 10) {
     .map((prediction) => ({
       prediction_id: prediction.id,
       user_id: prediction.user_id,
-      user_name: namesById[prediction.user_id] ?? 'Sem nome',
+      user_name: namesById[prediction.user_id] ?? getUserDisplayName(null),
       points: prediction.points ?? 0,
       updated_at: prediction.updated_at,
     })) as Sprint3RankingMovementActivity[]);
