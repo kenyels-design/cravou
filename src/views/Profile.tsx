@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { AuthError } from '@supabase/supabase-js';
+import ThemeToggle from '../components/ThemeToggle';
 import { Button } from '../components/ui/Button';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { InputField, SelectField } from '../components/ui/InputField';
@@ -208,7 +209,8 @@ export default function Profile() {
             </div>
 
             {!isEditing ? (
-              <div className="flex flex-col gap-3 lg:ml-auto lg:flex-row">
+              <div className="flex flex-col gap-3 lg:ml-auto lg:flex-row lg:items-center">
+                <ThemeToggle />
                 <Button
                   className="w-full cursor-pointer bg-[#CCFF00] text-black shadow-none transition-all duration-150 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 lg:w-auto"
                   onClick={() => {
