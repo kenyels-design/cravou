@@ -4,12 +4,64 @@ interface BottomNavigationProps {
   currentRoute: string;
 }
 
+function HomeIcon() {
+  return (
+    <svg aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M3 10.5 12 3l9 7.5" />
+      <path d="M5 9.5V21h14V9.5" />
+    </svg>
+  );
+}
+
+function GamesIcon() {
+  return (
+    <svg aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="9" />
+      <path d="m12 7 2.6 1.8-1 3.1h-3.2l-1-3.1L12 7Z" />
+      <path d="m8.5 16 1.8-2.1h3.4l1.8 2.1" />
+    </svg>
+  );
+}
+
+function PredictionsIcon() {
+  return (
+    <svg aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M9 6h11" />
+      <path d="M9 12h11" />
+      <path d="M9 18h11" />
+      <path d="m4 6 1.5 1.5L8 5" />
+      <path d="m4 12 1.5 1.5L8 11" />
+      <path d="m4 18 1.5 1.5L8 17" />
+    </svg>
+  );
+}
+
+function RankingIcon() {
+  return (
+    <svg aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <path d="M5 20V10" />
+      <path d="M12 20V6" />
+      <path d="M19 20v-8" />
+      <path d="M3 20h18" />
+    </svg>
+  );
+}
+
+function ProfileIcon() {
+  return (
+    <svg aria-hidden="true" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+      <circle cx="12" cy="8" r="4" />
+      <path d="M5 20a7 7 0 0 1 14 0" />
+    </svg>
+  );
+}
+
 const mobileNavItems = [
-  { hash: '#home', label: 'Home', icon: 'H' },
-  { hash: '#jogos', label: 'Jogos', icon: 'J' },
-  { hash: '#meus-palpites', label: 'Meus Palpites', icon: 'M' },
-  { hash: '#ranking', label: 'Ranking', icon: 'R' },
-  { hash: '#perfil', label: 'Perfil', icon: 'P' },
+  { hash: '#home', label: 'Home', icon: <HomeIcon /> },
+  { hash: '#jogos', label: 'Jogos', icon: <GamesIcon /> },
+  { hash: '#meus-palpites', label: 'Meus Palpites', icon: <PredictionsIcon /> },
+  { hash: '#ranking', label: 'Ranking', icon: <RankingIcon /> },
+  { hash: '#perfil', label: 'Perfil', icon: <ProfileIcon /> },
 ];
 
 const desktopNavItems = [
@@ -65,7 +117,7 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
             <a
               aria-current={isActive ? 'page' : undefined}
               className={[
-                'flex h-full min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-full px-1 py-1 text-[10px] font-bold uppercase tracking-wide transition',
+                'flex h-full min-w-0 flex-1 items-center justify-center rounded-full px-1 py-1 transition',
                 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]',
                 isActive
                   ? 'bg-[#CCFF00] text-black'
@@ -76,13 +128,13 @@ export default function BottomNavigation({ currentRoute }: BottomNavigationProps
             >
               <span
                 aria-hidden="true"
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-sm font-black ${
+                className={`inline-flex h-10 w-10 items-center justify-center rounded-full ${
                   isActive ? 'bg-black/10' : 'bg-[#E8E8F0] dark:bg-[#1C1C1C]'
                 }`}
               >
                 {item.icon}
               </span>
-              <span className="truncate text-[10px] leading-none">{item.label}</span>
+              <span className="sr-only">{item.label}</span>
             </a>
           );
         })}

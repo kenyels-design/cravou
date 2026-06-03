@@ -18,6 +18,7 @@ function getLoginErrorMessage(error: AuthError) {
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isExiting, setIsExiting] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -59,7 +60,10 @@ export default function Login() {
       }
 
       setSuccessMessage('Login realizado com sucesso. Redirecionando...');
-      window.location.hash = '#home';
+      setIsExiting(true);
+      window.setTimeout(() => {
+        window.location.hash = '#home';
+      }, 300);
     } catch (error) {
       const message =
         error && typeof error === 'object' && 'message' in error
@@ -73,6 +77,7 @@ export default function Login() {
 
   return (
     <AuthShell
+      className={isExiting ? 'opacity-0' : 'opacity-100'}
       footer={
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <a className="font-semibold text-primary transition hover:text-white" href="#cadastro">
@@ -108,7 +113,12 @@ export default function Login() {
           type="password"
           value={password}
         />
-        <Button disabled={loading} fullWidth type="submit">
+        <Button
+          className="cursor-pointer transition-all duration-150 hover:bg-[#CCFF00]/90 active:scale-95"
+          disabled={loading}
+          fullWidth
+          type="submit"
+        >
           {loading ? 'Entrando...' : 'Entrar'}
         </Button>
       </form>

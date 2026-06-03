@@ -105,15 +105,17 @@ function renderFlag(flag: string | null, fallback: string) {
 
   if (code) {
     return (
-      <span
-        aria-hidden="true"
-        className={`fi fi-${code} rounded-full`}
-        style={{ width: 48, height: 48, display: 'inline-block' }}
-      />
+      <span className="flex h-10 w-10 items-center justify-center md:h-12 md:w-12">
+        <span
+          aria-hidden="true"
+          className={`fi fi-${code} rounded-full`}
+          style={{ width: '100%', height: '100%', display: 'inline-block' }}
+        />
+      </span>
     );
   }
 
-  return <span className="flex h-12 w-12 items-center justify-center rounded-full bg-[#2A2A2A] text-base font-bold">{fallback}</span>;
+  return <span className="flex h-10 w-10 items-center justify-center rounded-full bg-[#2A2A2A] text-sm font-bold md:h-12 md:w-12 md:text-base">{fallback}</span>;
 }
 
 function initials(name: string) {
@@ -236,11 +238,11 @@ export default function Matches() {
   return (
     <div className="min-h-screen bg-[#EEEEF2] px-4 pb-28 pt-6 text-[#0A0A0A] dark:bg-[#0A0A0A] dark:text-white md:px-8 md:pb-12">
       <div className="mx-auto max-w-6xl space-y-4">
-        <header className="rounded-[16px] border border-[#D0D0D8] bg-white p-5 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none">
+        <header className="rounded-[16px] border border-[#D0D0D8] bg-white p-4 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none md:p-5">
           <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
             <div>
               <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Jogos</p>
-              <h1 className="mt-3 text-3xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white">Painel de confrontos</h1>
+              <h1 className="mt-3 text-2xl font-bold uppercase tracking-wide text-[#0A0A0A] dark:text-white md:text-3xl">Painel de confrontos</h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[#555566] dark:text-gray-400">
                 Explore os jogos da Copa, acompanhe o status da rodada e deixe seus palpites enquanto as partidas ainda
                 estiverem pendentes.
@@ -316,7 +318,7 @@ export default function Matches() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
                   {roundMatches.map((match) => {
                     if (!match) {
                       return null;
@@ -330,7 +332,7 @@ export default function Matches() {
 
                     return (
                       <article
-                        className={`cursor-pointer rounded-[16px] p-5 transition hover:-translate-y-0.5 ${cardClass(matchStatus)}`}
+                        className={`cursor-pointer rounded-[16px] p-4 transition hover:-translate-y-0.5 md:p-5 ${cardClass(matchStatus)}`}
                         key={match.id}
                         onClick={() => navigateToMatch(match.id)}
                         onKeyDown={(event) => {
@@ -366,12 +368,12 @@ export default function Matches() {
                         <div className="mt-5 grid grid-cols-[1fr_auto_1fr] items-center gap-3">
                           <div className="text-center">
                             <div className="mx-auto flex justify-center">{renderFlag(match.home_flag, initials(match.home_team))}</div>
-                            <p className="mt-2 text-sm font-semibold text-[#0A0A0A] dark:text-white">{match.home_team}</p>
+                            <p className="mt-2 text-xs font-semibold text-[#0A0A0A] dark:text-white md:text-sm">{match.home_team}</p>
                           </div>
 
                           <div className="text-center">
                             <p
-                              className={`text-4xl font-extrabold ${
+                              className={`text-3xl font-extrabold md:text-4xl ${
                                 matchStatus === 'ao_vivo'
                                   ? 'text-[#CCFF00]'
                                   : matchStatus === 'pendente'
@@ -387,7 +389,7 @@ export default function Matches() {
 
                           <div className="text-center">
                             <div className="mx-auto flex justify-center">{renderFlag(match.away_flag, initials(match.away_team))}</div>
-                            <p className="mt-2 text-sm font-semibold text-[#0A0A0A] dark:text-white">{match.away_team}</p>
+                            <p className="mt-2 text-xs font-semibold text-[#0A0A0A] dark:text-white md:text-sm">{match.away_team}</p>
                           </div>
                         </div>
 
