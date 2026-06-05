@@ -65,8 +65,8 @@ function departmentColor(department: string | null) {
 function podiumStyle(position: PodiumPosition) {
   if (position === 1) {
     return {
-      wrapper: 'md:-mt-6 md:self-start',
-      card: 'min-h-[320px] w-full max-w-[280px] border-[#CCFF00]/40 bg-[radial-gradient(circle_at_top,_rgba(204,255,0,0.2),_transparent_55%),#FFFFFF] shadow-[0_0_50px_rgba(204,255,0,0.22),0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[radial-gradient(circle_at_top,_rgba(204,255,0,0.2),_transparent_55%),#141414] dark:shadow-[0_0_50px_rgba(204,255,0,0.22)]',
+      wrapper: 'w-full max-w-[320px] self-end md:z-10',
+      card: 'min-h-[320px] w-full border-[#CCFF00]/40 bg-[radial-gradient(circle_at_top,_rgba(204,255,0,0.2),_transparent_55%),#FFFFFF] shadow-[0_0_50px_rgba(204,255,0,0.22),0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[radial-gradient(circle_at_top,_rgba(204,255,0,0.2),_transparent_55%),#141414] dark:shadow-[0_0_50px_rgba(204,255,0,0.22)]',
       avatar: 'h-24 w-24 border-[#CCFF00] text-2xl shadow-[0_0_24px_rgba(204,255,0,0.35)]',
       place: 'text-7xl text-[#CCFF00]',
       points: 'text-[#CCFF00]',
@@ -76,8 +76,8 @@ function podiumStyle(position: PodiumPosition) {
 
   if (position === 2) {
     return {
-      wrapper: 'md:translate-y-10',
-      card: 'min-h-[272px] w-full max-w-[240px] border-[#D0D0D8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-[#141414] dark:shadow-none',
+      wrapper: 'w-full max-w-[240px] self-end',
+      card: 'min-h-[272px] w-full border-[#D0D0D8] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-white/10 dark:bg-[#141414] dark:shadow-none',
       avatar: 'h-20 w-20 border-[#D4D4D8] text-xl',
       place: 'text-6xl text-[#0A0A0A] dark:text-white',
       points: 'text-[#0A0A0A] dark:text-white',
@@ -86,8 +86,8 @@ function podiumStyle(position: PodiumPosition) {
   }
 
   return {
-    wrapper: 'md:translate-y-16',
-    card: 'min-h-[248px] w-full max-w-[220px] border-[#FF007F]/20 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[#141414] dark:shadow-none',
+    wrapper: 'w-full max-w-[220px] self-end',
+    card: 'min-h-[248px] w-full border-[#FF007F]/20 bg-white shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:bg-[#141414] dark:shadow-none',
     avatar: 'h-16 w-16 border-[#FF007F] text-lg',
     place: 'text-5xl text-[#FF007F]',
     points: 'text-[#FF007F]',
@@ -108,7 +108,7 @@ function PodiumCard({
   const departmentLabel = normalizeDepartmentName(entry.departamento) ?? 'Sem departamento';
 
   return (
-    <article className={`flex w-full justify-center ${style.wrapper}`}>
+    <article className={`flex justify-center ${style.wrapper}`}>
       <div
         className={`relative flex w-full flex-col overflow-hidden rounded-[28px] border px-5 pb-6 pt-5 ${
           style.card
@@ -136,8 +136,15 @@ function PodiumCard({
             {initials(entry.nome)}
           </div>
 
-          <p className="mt-5 text-lg font-bold text-[#0A0A0A] dark:text-white">{abbreviatedName(entry.nome)}</p>
-          <p className="mt-2 text-xs uppercase tracking-[0.24em] text-[#555566] dark:text-gray-500">{departmentLabel}</p>
+          <p className="mt-5 max-w-full truncate text-lg font-bold text-[#0A0A0A] dark:text-white" title={entry.nome}>
+            {abbreviatedName(entry.nome)}
+          </p>
+          <p
+            className="mt-2 max-w-full truncate text-xs uppercase tracking-[0.24em] text-[#555566] dark:text-gray-500"
+            title={departmentLabel}
+          >
+            {departmentLabel}
+          </p>
           <p className={`mt-5 text-3xl font-black ${style.points}`}>{entry.total_points} pts</p>
         </div>
       </div>
@@ -297,21 +304,38 @@ export default function Ranking() {
           <>
             {mode === 'geral' ? (
               <>
-                <section className="rounded-[28px] border border-[#D0D0D8] bg-[#F6F6FA] px-4 py-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none md:px-6">
-                  <div className="grid gap-4 md:grid-cols-[0.9fr_1.1fr_0.85fr] md:items-end">
+                <section className="overflow-visible rounded-[28px] border border-[#D0D0D8] bg-[#F6F6FA] px-4 py-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none md:px-6">
+                  <div className="flex flex-col items-center gap-4 overflow-visible md:hidden">
+                    {podium[0] ? (
+                      <PodiumCard entry={podium[0]} highlight={user?.id === podium[0].user_id} position={1} />
+                    ) : null}
+
+                    {(podium[1] || podium[2]) ? (
+                      <div className="flex w-full items-end justify-center gap-4 overflow-visible">
+                        {podium[1] ? (
+                          <PodiumCard entry={podium[1]} highlight={user?.id === podium[1].user_id} position={2} />
+                        ) : (
+                          <div className="w-full max-w-[240px]" />
+                        )}
+                        {podium[2] ? (
+                          <PodiumCard entry={podium[2]} highlight={user?.id === podium[2].user_id} position={3} />
+                        ) : (
+                          <div className="w-full max-w-[220px]" />
+                        )}
+                      </div>
+                    ) : null}
+                  </div>
+
+                  <div className="hidden min-h-[360px] overflow-visible md:flex md:items-end md:justify-center md:gap-4">
                     {podium[1] ? (
                       <PodiumCard entry={podium[1]} highlight={user?.id === podium[1].user_id} position={2} />
-                    ) : (
-                      <div className="hidden md:block" />
-                    )}
+                    ) : null}
                     {podium[0] ? (
                       <PodiumCard entry={podium[0]} highlight={user?.id === podium[0].user_id} position={1} />
                     ) : null}
                     {podium[2] ? (
                       <PodiumCard entry={podium[2]} highlight={user?.id === podium[2].user_id} position={3} />
-                    ) : (
-                      <div className="hidden md:block" />
-                    )}
+                    ) : null}
                   </div>
                 </section>
 
