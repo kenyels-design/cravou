@@ -6,13 +6,11 @@ export interface UserProfile {
 }
 
 export const DEPARTMENTS = [
-  'Financeiro',
-  'Administrativo',
+  'Financeiro/Administrativo',
   'Governo',
   'Desenvolvimento',
-  'Suporte',
-  'Comercial',
-  'Franquias/Canais',
+  'Comercial/Aquisição',
+  'Franquias/Canais/Suporte',
   'Marketing',
 ] as const;
 

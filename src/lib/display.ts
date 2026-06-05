@@ -1,15 +1,21 @@
 import { DEPARTMENTS } from './types';
 
 const DEPARTMENT_ALIASES: Record<string, string> = {
-  financeiro: 'Financeiro',
-  administrativo: 'Administrativo',
+  financeiro: 'Financeiro/Administrativo',
+  administrativo: 'Financeiro/Administrativo',
+  'financeiro/administrativo': 'Financeiro/Administrativo',
   governo: 'Governo',
   desenvolvimento: 'Desenvolvimento',
-  suporte: 'Suporte',
-  comercial: 'Comercial',
-  'franquias/canais': 'Franquias/Canais',
+  suporte: 'Franquias/Canais/Suporte',
+  comercial: 'Comercial/Aquisição',
+  aquisicao: 'Comercial/Aquisição',
+  'comercial/aquisicao': 'Comercial/Aquisição',
+  franquias: 'Franquias/Canais/Suporte',
+  canais: 'Franquias/Canais/Suporte',
+  'franquias/canais': 'Franquias/Canais/Suporte',
+  'franquias/canais/suporte': 'Franquias/Canais/Suporte',
   marketing: 'Marketing',
-  operacoes: 'Administrativo',
+  operacoes: 'Financeiro/Administrativo',
   ti: 'Desenvolvimento',
 };
 

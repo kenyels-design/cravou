@@ -248,7 +248,7 @@ export default function Ranking() {
                 <p className="mt-2 max-w-2xl text-sm text-[#555566] dark:text-gray-400">
                   {mode === 'geral'
                     ? 'Veja quem lidera no ranking geral, com podio e lista completa de participantes.'
-                    : 'Compare os 8 departamentos oficiais pela pontuacao total e expanda um card para ver o ranking interno.'}
+                    : 'Compare os 6 departamentos oficiais pela pontuacao total e expanda um card para ver o ranking interno.'}
                 </p>
               </div>
 

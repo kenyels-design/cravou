@@ -20,6 +20,7 @@ Supabase "Demos" compartilhado. Schema próprio: cravou.
 - Pontuação: placar exato = 10pts, desfecho = 5pts, erro = 0pts
 - Palpite editável apenas enquanto match.status = 'pendente'
 - Admin: cadastra jogos, atualiza placares, calcula pontos
+- Departamentos oficiais: Financeiro/Administrativo, Governo, Desenvolvimento, Comercial/AquisiÃ§Ã£o, Franquias/Canais/Suporte, Marketing
 
 ## Design system: Neon Bento Box Sports
 - Fundo: #0A0A0A
