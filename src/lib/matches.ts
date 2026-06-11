@@ -285,6 +285,8 @@ export async function getRecentPredictionActivity(limit = 5) {
           user_name: namesById[prediction.user_id] ?? getUserDisplayName(null),
           match_id: prediction.match_id,
           match_label: `${match?.home_team ?? 'Time A'} x ${match?.away_team ?? 'Time B'}`,
+          home_team: match?.home_team ?? 'Time A',
+          away_team: match?.away_team ?? 'Time B',
           home_score: prediction.home_score,
           away_score: prediction.away_score,
           points: prediction.points,

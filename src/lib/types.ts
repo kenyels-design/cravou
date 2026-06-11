@@ -140,6 +140,8 @@ export interface Sprint3PredictionActivity {
   user_name: string;
   match_id: string;
   match_label: string;
+  home_team: string;
+  away_team: string;
   home_score: number;
   away_score: number;
   points: number | null;

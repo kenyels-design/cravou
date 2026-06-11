@@ -290,12 +290,13 @@ export default function Ranking() {
 
             <div className="mt-4">
               <button
+                aria-expanded={showScoringRules}
                 className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#2A2A2A] bg-[#141414] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]"
                 onClick={() => setShowScoringRules((current) => !current)}
                 type="button"
               >
                 <span aria-hidden="true">📋</span>
-                <span>Regras de Pontuacao</span>
+                <span>Regras de Pontuação</span>
               </button>
 
               <div
@@ -447,6 +448,7 @@ export default function Ranking() {
                   const isExpanded = expandedDepartment === card.department;
                   const isLeader = index === 0 && card.averagePoints > 0;
                   const isCurrentDepartment = currentDepartment === card.department;
+                  const averagePointsLabel = `${card.averagePoints.toFixed(1)} pts`;
                   const progressWidth =
                     leadingDepartmentAverage > 0
                       ? Math.max((card.averagePoints / leadingDepartmentAverage) * 100, card.averagePoints > 0 ? 10 : 0)
@@ -510,8 +512,8 @@ export default function Ranking() {
                             />
                           </div>
                           <div className="mt-3 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-[#555566] dark:text-gray-500">
-                            <span>Forca relativa</span>
-                            <span>{Math.round(progressWidth)}%</span>
+                            <span>MÉDIA DE PONTOS</span>
+                            <span>{averagePointsLabel}</span>
                           </div>
                         </div>
                       </button>

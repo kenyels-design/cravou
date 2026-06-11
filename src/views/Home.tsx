@@ -110,7 +110,7 @@ function buildFeedItems(
     timestamp: item.created_at,
     icon: 'P',
     accent: 'text-[#CCFF00]',
-    text: `${item.user_name} apostou em ${item.match_label}`,
+    text: `${item.user_name} apostou em ${item.home_team} x ${item.away_team}`,
   }));
 
   const namesByUser = leaderboard.reduce<Record<string, string>>((accumulator, entry) => {
