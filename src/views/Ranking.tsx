@@ -14,6 +14,7 @@ type DepartmentRankingCard = {
   department: DepartmentName;
   participants: number;
   totalPoints: number;
+  averagePoints: number;
   members: Sprint3LeaderboardEntry[];
 };
 
@@ -159,6 +160,7 @@ export default function Ranking() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [mode, setMode] = useState<RankingMode>('geral');
   const [expandedDepartment, setExpandedDepartment] = useState<DepartmentName | null>(null);
+  const [showScoringRules, setShowScoringRules] = useState(false);
 
   const loadRanking = useCallback(async () => {
     setLoading(true);
@@ -193,6 +195,7 @@ export default function Ranking() {
         department,
         participants: 0,
         totalPoints: 0,
+        averagePoints: 0,
         members: [],
       });
     });
@@ -218,6 +221,7 @@ export default function Ranking() {
     return Array.from(grouped.values())
       .map((card) => ({
         ...card,
+        averagePoints: card.participants > 0 ? card.totalPoints / card.participants : 0,
         members: [...card.members].sort((left, right) => {
           if (right.total_points !== left.total_points) {
             return right.total_points - left.total_points;
@@ -227,15 +231,15 @@ export default function Ranking() {
         }),
       }))
       .sort((left, right) => {
-        if (right.totalPoints !== left.totalPoints) {
-          return right.totalPoints - left.totalPoints;
+        if (right.averagePoints !== left.averagePoints) {
+          return right.averagePoints - left.averagePoints;
         }
 
         return DEPARTMENTS.indexOf(left.department) - DEPARTMENTS.indexOf(right.department);
       });
   }, [entries]);
 
-  const leadingDepartmentPoints = departmentCards[0]?.totalPoints ?? 0;
+  const leadingDepartmentAverage = departmentCards[0]?.averagePoints ?? 0;
   const currentDepartment = normalizeDepartmentName(profile?.departamento ?? null);
 
   const podium = visibleEntries.slice(0, 3);
@@ -255,7 +259,7 @@ export default function Ranking() {
                 <p className="mt-2 max-w-2xl text-sm text-[#555566] dark:text-gray-400">
                   {mode === 'geral'
                     ? 'Veja quem lidera no ranking geral, com podio e lista completa de participantes.'
-                    : 'Compare os 6 departamentos oficiais pela pontuacao total e expanda um card para ver o ranking interno.'}
+                    : 'Compare os 6 departamentos oficiais pela media de pontos e expanda um card para ver o ranking interno.'}
                 </p>
               </div>
 
@@ -281,6 +285,45 @@ export default function Ranking() {
                     </button>
                   );
                 })}
+              </div>
+            </div>
+
+            <div className="mt-4">
+              <button
+                className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-[#2A2A2A] bg-[#141414] px-4 py-2 text-sm font-semibold text-white transition-opacity hover:opacity-80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00]"
+                onClick={() => setShowScoringRules((current) => !current)}
+                type="button"
+              >
+                <span aria-hidden="true">📋</span>
+                <span>Regras de Pontuacao</span>
+              </button>
+
+              <div
+                className={`overflow-hidden transition-[max-height,opacity,margin] duration-300 ease-out ${
+                  showScoringRules ? 'mt-4 max-h-[420px] opacity-100' : 'mt-0 max-h-0 opacity-0'
+                }`}
+              >
+                <div className="rounded-[24px] border border-[#2A2A2A] bg-[#141414] p-5 text-white">
+                  <div className="space-y-4">
+                    <div>
+                      <p className="text-sm font-black tracking-tight text-[#F4D35E]">🟡 PLACAR EXATO → 10 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Voce acertou o resultado preciso do jogo.</p>
+                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou 2x1 e terminou 2x1.</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-black tracking-tight text-[#4ADE80]">🟢 DESFECHO CORRETO → 5 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Acertou quem venceu ou que seria empate, mas errou o placar exato.</p>
+                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou 2x1 e terminou 3x0.</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-black tracking-tight text-[#F87171]">🔴 ERRO → 0 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Errou o desfecho do jogo.</p>
+                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou vitoria e houve empate.</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -402,10 +445,12 @@ export default function Ranking() {
               <section className="space-y-4">
                 {departmentCards.map((card, index) => {
                   const isExpanded = expandedDepartment === card.department;
-                  const isLeader = index === 0 && card.totalPoints > 0;
+                  const isLeader = index === 0 && card.averagePoints > 0;
                   const isCurrentDepartment = currentDepartment === card.department;
                   const progressWidth =
-                    leadingDepartmentPoints > 0 ? Math.max((card.totalPoints / leadingDepartmentPoints) * 100, card.totalPoints > 0 ? 10 : 0) : 0;
+                    leadingDepartmentAverage > 0
+                      ? Math.max((card.averagePoints / leadingDepartmentAverage) * 100, card.averagePoints > 0 ? 10 : 0)
+                      : 0;
 
                   return (
                     <article
@@ -447,10 +492,10 @@ export default function Ranking() {
 
                           <div className="shrink-0">
                             <p className={`text-3xl font-black ${isLeader ? 'text-[#6A8400] dark:text-[#CCFF00]' : 'text-[#0A0A0A] dark:text-white'}`}>
-                              {card.totalPoints} pts
+                              {card.averagePoints.toFixed(1)} pts (media)
                             </p>
                             <p className="mt-1 text-xs uppercase tracking-[0.2em] text-[#555566] dark:text-gray-500">
-                              Total do departamento
+                              Media do departamento
                             </p>
                           </div>
                         </div>
