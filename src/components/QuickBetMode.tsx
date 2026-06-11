@@ -9,6 +9,16 @@ interface QuickBetModeProps {
   onPredictionSaved: (prediction: Sprint3PredictionRecord) => void;
 }
 
+function getMatchDeadline(matchTime: string) {
+  const kickoff = new Date(matchTime).getTime();
+
+  if (Number.isNaN(kickoff)) {
+    return null;
+  }
+
+  return kickoff - 60 * 60 * 1000;
+}
+
 function initials(name: string) {
   return name
     .split(' ')
@@ -47,6 +57,7 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [savedCount, setSavedCount] = useState(0);
+  const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
     setCurrentIndex(0);
@@ -57,9 +68,27 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
     setSavedCount(0);
   }, [matches]);
 
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      setNow(Date.now());
+    }, 60000);
+
+    return () => {
+      window.clearInterval(interval);
+    };
+  }, []);
+
   const safeMatches = useMemo(
-    () => (matches ?? []).filter((match): match is Sprint3MatchRecord => Boolean(match)),
-    [matches],
+    () =>
+      (matches ?? []).filter((match): match is Sprint3MatchRecord => {
+        if (!match) {
+          return false;
+        }
+
+        const deadline = getMatchDeadline(match.match_time);
+        return deadline == null || deadline > now;
+      }),
+    [matches, now],
   );
   const totalMatches = safeMatches.length;
   const currentMatch = safeMatches[currentIndex] ?? null;
@@ -136,7 +165,23 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
         </div>
 
         <div className="mt-4 flex min-h-0 flex-1">
-          {isComplete ? (
+          {totalMatches === 0 ? (
+            <div className="flex h-full w-full items-center justify-center">
+              <div className="w-full max-w-2xl rounded-[24px] border border-[#E0E0E0] bg-white p-6 text-center md:p-8 dark:border-[#2A2A2A] dark:bg-[#141414]">
+                <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Modo Rapido</p>
+                <h2 className="mt-4 text-2xl font-bold uppercase tracking-wide text-[#0A0A0A] md:text-3xl dark:text-white">
+                  Nenhum jogo disponivel para apostas
+                </h2>
+                <button
+                  className="mt-8 inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-[#CCFF00] px-6 py-3 text-sm font-bold uppercase tracking-wide text-black transition-all duration-150 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
+                  onClick={onClose}
+                  type="button"
+                >
+                  Voltar para jogos
+                </button>
+              </div>
+            </div>
+          ) : isComplete ? (
             <div className="flex h-full w-full items-center justify-center">
               <div className="w-full max-w-2xl rounded-[24px] border border-[#E0E0E0] bg-white p-6 text-center md:p-8 dark:border-[#2A2A2A] dark:bg-[#141414]">
                 <p className="text-xs font-bold uppercase tracking-wide text-[#FF007F]">Concluido</p>

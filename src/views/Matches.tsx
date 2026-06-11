@@ -16,30 +16,14 @@ const filterLabels: Record<MatchFilter, string> = {
   sem_palpite: 'Sem Palpite',
 };
 
-function getRoundDeadline(matches: Array<Sprint3MatchRecord | null | undefined>) {
-  const firstMatchTime = matches.reduce<number | null>((earliest, match) => {
-    if (!match) {
-      return earliest;
-    }
+function getMatchDeadline(matchTime: string) {
+  const kickoff = new Date(matchTime).getTime();
 
-    const matchTime = new Date(match.match_time).getTime();
-
-    if (Number.isNaN(matchTime)) {
-      return earliest;
-    }
-
-    if (earliest == null || matchTime < earliest) {
-      return matchTime;
-    }
-
-    return earliest;
-  }, null);
-
-  if (firstMatchTime == null) {
+  if (Number.isNaN(kickoff)) {
     return null;
   }
 
-  return firstMatchTime - 60 * 60 * 1000;
+  return kickoff - 60 * 60 * 1000;
 }
 
 function groupMatchesByRound(matches: Array<Sprint3MatchRecord | null | undefined>) {
@@ -56,7 +40,6 @@ function groupMatchesByRound(matches: Array<Sprint3MatchRecord | null | undefine
   return Object.entries(groups).map(([round, roundMatches]) => ({
     round,
     matches: roundMatches,
-    deadline: getRoundDeadline(roundMatches),
   }));
 }
 
@@ -147,19 +130,19 @@ function realScoreText(match: Sprint3MatchRecord) {
   return `${match.home_score} x ${match.away_score}`;
 }
 
-function roundClosingLabel(deadline: number | null, now: number) {
+function matchClosingLabel(deadline: number | null, now: number) {
   if (deadline == null) {
     return null;
   }
 
   const diffMs = deadline - now;
 
-  if (diffMs <= 0) {
-    return 'Encerrado para apostas';
+  if (diffMs <= 0 || diffMs > 24 * 60 * 60 * 1000) {
+    return null;
   }
 
   const hoursLeft = Math.ceil(diffMs / (1000 * 60 * 60));
-  return `Fecha em ${hoursLeft} hora${hoursLeft === 1 ? '' : 's'}`;
+  return `Fecha em ${hoursLeft}h`;
 }
 
 export default function Matches() {
@@ -295,7 +278,7 @@ export default function Matches() {
           </div>
         ) : (
           <div className="space-y-6">
-            {groupedMatches.map(({ deadline, matches: roundMatches, round }) => (
+            {groupedMatches.map(({ matches: roundMatches, round }) => (
               <section className="space-y-4" key={round}>
                 <div className="flex items-center justify-between gap-4">
                   <div>
@@ -304,17 +287,6 @@ export default function Matches() {
                   </div>
                   <div className="text-right">
                     <p className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">{roundMatches.length} jogos</p>
-                    {deadline != null ? (
-                      <span
-                        className={`mt-2 inline-flex rounded-full px-3 py-1 text-[11px] font-bold uppercase tracking-wide ${
-                          now >= deadline
-                            ? 'border border-[#FF007F] bg-[#FFE3F1] text-[#FF007F] dark:bg-[#2A101A]'
-                            : 'border border-[#D0D0D8] bg-[#E8E8F0] text-[#555566] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-[#CCFF00]'
-                        }`}
-                      >
-                        {roundClosingLabel(deadline, now)}
-                      </span>
-                    ) : null}
                   </div>
                 </div>
 
@@ -327,8 +299,10 @@ export default function Matches() {
                     const prediction = predictions?.[match?.id] ?? null;
                     const matchStatus = match?.status;
                     const showResolvedData = matchStatus === 'ao_vivo' || matchStatus === 'finalizado';
-                    const bettingClosedForRound = deadline != null && now >= deadline;
-                    const canQuickOpenMatch = matchStatus === 'pendente' && !bettingClosedForRound;
+                    const matchDeadline = getMatchDeadline(match.match_time);
+                    const bettingClosedForMatch = matchDeadline != null && now >= matchDeadline;
+                    const closingLabel = matchStatus === 'pendente' ? matchClosingLabel(matchDeadline, now) : null;
+                    const canQuickOpenMatch = matchStatus === 'pendente' && !bettingClosedForMatch;
 
                     return (
                       <article
@@ -348,7 +322,14 @@ export default function Matches() {
                           <div>
                             <p className="text-xs uppercase tracking-wide text-[#555566] dark:text-gray-500">{match.round}</p>
                             {matchStatus === 'pendente' ? (
-                              <p className="mt-2 text-xs text-[#555566] dark:text-gray-400">{formatMatchKickoff(match.match_time)}</p>
+                              <>
+                                <p className="mt-2 text-xs text-[#555566] dark:text-gray-400">{formatMatchKickoff(match.match_time)}</p>
+                                {closingLabel ? (
+                                  <p className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[#B7E000]">
+                                    {closingLabel}
+                                  </p>
+                                ) : null}
+                              </>
                             ) : null}
                           </div>
 
@@ -435,7 +416,7 @@ export default function Matches() {
                               }}
                               type="button"
                             >
-                              {bettingClosedForRound ? 'Encerrado' : prediction ? 'Editar' : 'Palpitar'}
+                              {bettingClosedForMatch ? 'Encerrado' : prediction ? 'Editar' : 'Palpitar'}
                             </button>
                           </div>
                         ) : matchStatus === 'ao_vivo' ? (

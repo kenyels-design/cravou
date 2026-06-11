@@ -59,6 +59,16 @@ function stepScore(value: string, direction: -1 | 1) {
   return String(next);
 }
 
+function getMatchDeadline(matchTime: string) {
+  const kickoff = new Date(matchTime).getTime();
+
+  if (Number.isNaN(kickoff)) {
+    return null;
+  }
+
+  return kickoff - 60 * 60 * 1000;
+}
+
 export default function MatchDetail({ matchId }: MatchDetailProps) {
   const { user } = useAuth();
   const [match, setMatch] = useState<Sprint3MatchRecord | null>(null);
@@ -106,7 +116,10 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
     void loadData();
   }, [loadData]);
 
-  const canEdit = match?.status === 'pendente';
+  const now = Date.now();
+  const matchDeadline = match ? getMatchDeadline(match.match_time) : null;
+  const bettingClosed = !match || match.status !== 'pendente' || matchDeadline == null || now >= matchDeadline;
+  const canEdit = !bettingClosed;
   const potentialPoints = useMemo(() => {
     if (!match || !prediction) {
       return null;
@@ -130,7 +143,7 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
   }, [match, prediction]);
 
   const savePrediction = async () => {
-    if (!match || match.status !== 'pendente') {
+    if (!match || bettingClosed) {
       setErrorMessage('Esse jogo nao aceita novos palpites agora.');
       return;
     }
@@ -305,7 +318,11 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
               ) : (
                 <div className="space-y-2">
                   <p className="text-xs uppercase tracking-wide text-[#CCFF00]">Seu palpite</p>
-                  <p className="text-sm text-gray-400">Voce nao registrou palpite para este jogo.</p>
+                  <p className="text-sm text-gray-400">
+                    {bettingClosed
+                      ? 'A janela para palpites deste jogo foi encerrada.'
+                      : 'Voce nao registrou palpite para este jogo.'}
+                  </p>
                 </div>
               )}
             </section>
