@@ -1,0 +1,4 @@
+project_id = "cravou-app"
+
+[functions.sync-matches]
+verify_jwt = false
