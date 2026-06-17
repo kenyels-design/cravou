@@ -2,13 +2,24 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAuth } from '../context/AuthContext';
-import { formatMatchKickoff, getFlagCode } from '../lib/display';
+import { formatMatchKickoff, getFlagCode, normalizeDepartmentName } from '../lib/display';
 import { getMatches, getMyPredictions, upsertPrediction } from '../lib/matches';
+import { supabase } from '../lib/supabaseClient';
 import type { Sprint3MatchRecord, Sprint3PredictionRecord } from '../lib/types';
 
 interface MatchDetailProps {
   matchId: string;
 }
+
+type EveryonePredictionRow = {
+  userId: string;
+  nome: string;
+  departamento: string | null;
+  homeScore: number | null;
+  awayScore: number | null;
+  points: number | null;
+  hasPrediction: boolean;
+};
 
 function renderFlag(flag: string | null, fallback: string) {
   const code = getFlagCode(flag);
@@ -33,6 +44,48 @@ function initials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
+}
+
+function pointsBadge(points: number | null) {
+  if (points === 25) {
+    return {
+      className: 'bg-[#CCFF00] text-black',
+      label: 'CRAVADA! 🎯',
+    };
+  }
+
+  if (points === 18) {
+    return {
+      className: 'bg-[#7DD3FC] text-[#082F49]',
+      label: '18 pts',
+    };
+  }
+
+  if (points === 15) {
+    return {
+      className: 'bg-[#4ADE80] text-[#052E16]',
+      label: '15 pts',
+    };
+  }
+
+  if (points === 12) {
+    return {
+      className: 'bg-[#FACC15] text-[#422006]',
+      label: '12 pts',
+    };
+  }
+
+  if (points === 10) {
+    return {
+      className: 'bg-[#E5E7EB] text-[#111827]',
+      label: '10 pts',
+    };
+  }
+
+  return {
+    className: 'bg-[#FF007F]/20 text-[#FF66B2]',
+    label: '0 pts',
+  };
 }
 
 function liveHeadline(match: Sprint3MatchRecord) {
@@ -73,6 +126,7 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
   const { user } = useAuth();
   const [match, setMatch] = useState<Sprint3MatchRecord | null>(null);
   const [prediction, setPrediction] = useState<Sprint3PredictionRecord | null>(null);
+  const [everyonePredictions, setEveryonePredictions] = useState<EveryonePredictionRow[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [homeScore, setHomeScore] = useState('0');
   const [awayScore, setAwayScore] = useState('0');
@@ -94,8 +148,86 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
       const foundMatch = matchRows.find((item) => item.id === matchId) ?? null;
       const foundPrediction = predictionRows.find((item) => item.match_id === matchId) ?? null;
 
+      let everyoneRows: EveryonePredictionRow[] = [];
+
+      if (foundMatch?.status === 'finalizado') {
+        const [{ data: predictionsData, error: predictionsError }, { data: usersData, error: usersError }] =
+          await Promise.all([
+            supabase
+              .schema('cravou')
+              .from('predictions')
+              .select('home_score, away_score, points, user_id')
+              .eq('match_id', matchId)
+              .order('points', { ascending: false }),
+            supabase.from('cravou_users').select('id, nome, departamento'),
+          ]);
+
+        if (predictionsError) {
+          throw predictionsError;
+        }
+
+        if (usersError) {
+          throw usersError;
+        }
+
+        const predictionMap = new Map<
+          string,
+          {
+            home_score: number | null;
+            away_score: number | null;
+            points: number | null;
+          }
+        >();
+
+        (((predictionsData as
+          | Array<{
+              user_id: string;
+              home_score: number | null;
+              away_score: number | null;
+              points: number | null;
+            }>
+          | null) ?? [])).forEach((entry) => {
+          predictionMap.set(entry.user_id, entry);
+        });
+
+        const users =
+          ((usersData as Array<{ id: string; nome: string | null; departamento: string | null }> | null) ?? []).map((entry) => {
+            const predictionEntry = predictionMap.get(entry.id);
+
+            return {
+              userId: entry.id,
+              nome: entry.nome?.trim() || 'Participante',
+              departamento: entry.departamento ?? null,
+              homeScore: predictionEntry?.home_score ?? null,
+              awayScore: predictionEntry?.away_score ?? null,
+              points: predictionEntry?.points ?? null,
+              hasPrediction: Boolean(predictionEntry),
+            };
+          });
+
+        const withPrediction = users
+          .filter((entry) => entry.hasPrediction)
+          .sort((left, right) => {
+            const leftPoints = left.points ?? -1;
+            const rightPoints = right.points ?? -1;
+
+            if (rightPoints !== leftPoints) {
+              return rightPoints - leftPoints;
+            }
+
+            return left.nome.localeCompare(right.nome, 'pt-BR');
+          });
+
+        const withoutPrediction = users
+          .filter((entry) => !entry.hasPrediction)
+          .sort((left, right) => left.nome.localeCompare(right.nome, 'pt-BR'));
+
+        everyoneRows = [...withPrediction, ...withoutPrediction];
+      }
+
       setMatch(foundMatch);
       setPrediction(foundPrediction);
+      setEveryonePredictions(everyoneRows);
       setIsEditing(false);
       setHomeScore(foundPrediction ? String(foundPrediction.home_score) : '0');
       setAwayScore(foundPrediction ? String(foundPrediction.away_score) : '0');
@@ -107,6 +239,7 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
       setErrorMessage(message);
       setMatch(null);
       setPrediction(null);
+      setEveryonePredictions([]);
     } finally {
       setLoading(false);
     }
@@ -217,6 +350,75 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
                 </div>
               </div>
             </section>
+
+            {match.status === 'finalizado' ? (
+              <section className="rounded-[20px] border border-[#2A2A2A] bg-[#141414] p-5 text-white">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.22em] text-[#CCFF00]">Resultados</p>
+                    <h3 className="mt-2 text-2xl font-black tracking-tight">👥 Palpites de Todos</h3>
+                  </div>
+                  <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-gray-300">
+                    {everyonePredictions.length} participantes
+                  </span>
+                </div>
+
+                {everyonePredictions.length > 0 ? (
+                  <div className="mt-5">
+                    <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                      {everyonePredictions.map((entry, index) => {
+                        const shouldShowSeparator =
+                          index > 0 && !entry.hasPrediction && everyonePredictions[index - 1]?.hasPrediction;
+                        const badge = pointsBadge(entry.points);
+                        const departmentLabel = normalizeDepartmentName(entry.departamento) ?? 'Sem departamento';
+
+                        return (
+                          <div key={entry.userId} className={shouldShowSeparator ? 'md:col-span-2' : undefined}>
+                            {shouldShowSeparator ? (
+                              <div className="mb-3 rounded-2xl border border-dashed border-white/10 bg-white/[0.03] px-4 py-3 text-xs font-bold uppercase tracking-[0.22em] text-gray-400">
+                                Participantes sem palpite
+                              </div>
+                            ) : null}
+
+                            <article className="flex items-center justify-between gap-3 rounded-[18px] border border-white/8 bg-white/[0.04] px-4 py-3">
+                              <div className="flex min-w-0 items-center gap-3">
+                                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full border border-[#2A2A2A] bg-[#222222] text-sm font-black text-white">
+                                  {initials(entry.nome)}
+                                </div>
+
+                                <div className="min-w-0">
+                                  <p className="truncate text-sm font-bold text-white">{entry.nome}</p>
+                                  <p className="truncate text-xs uppercase tracking-[0.18em] text-gray-500">{departmentLabel}</p>
+                                </div>
+                              </div>
+
+                              <div className="text-right">
+                                {entry.hasPrediction ? (
+                                  <>
+                                    <p className="text-sm font-semibold text-white">
+                                      {entry.homeScore} x {entry.awayScore}
+                                    </p>
+                                    <span className={`mt-2 inline-flex rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide ${badge.className}`}>
+                                      {badge.label}
+                                    </span>
+                                  </>
+                                ) : (
+                                  <span className="inline-flex rounded-full border border-[#2A2A2A] bg-[#1C1C1C] px-3 py-1 text-xs font-semibold text-gray-400">
+                                    Não apostou
+                                  </span>
+                                )}
+                              </div>
+                            </article>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <p className="mt-5 text-sm text-gray-400">Nenhum participante encontrado para este jogo.</p>
+                )}
+              </section>
+            ) : null}
 
             <section className="rounded-2xl bg-[#FAFAFA] p-4 dark:bg-[#1C1C1C]">
               {prediction && canEdit && !isEditing ? (
