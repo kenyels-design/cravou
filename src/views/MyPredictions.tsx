@@ -5,6 +5,8 @@ import type { Sprint3PredictionWithMatchRecord } from '../lib/matches';
 
 type PredictionFilter = 'todos' | 'acertos' | 'erros' | 'pendente';
 
+type PredictionStatus = 'acerto' | 'erro' | 'pendente' | 'ao_vivo';
+
 const filterLabels: Record<PredictionFilter, string> = {
   todos: 'Todos',
   acertos: 'Acertos',
@@ -12,16 +14,24 @@ const filterLabels: Record<PredictionFilter, string> = {
   pendente: 'Pendentes',
 };
 
-function predictionStatus(prediction: Sprint3PredictionWithMatchRecord) {
+function predictionStatus(prediction: Sprint3PredictionWithMatchRecord): PredictionStatus {
   if (prediction.matches?.status === 'ao_vivo') {
     return 'ao_vivo';
   }
 
-  if (prediction.matches?.status === 'pendente') {
+  if (prediction.points === null || prediction.matches?.status === 'pendente') {
     return 'pendente';
   }
 
-  return (prediction.points ?? 0) > 0 ? 'acerto' : 'erro';
+  if (prediction.points === 25) {
+    return 'acerto';
+  }
+
+  if ([18, 15, 12, 10].includes(prediction.points)) {
+    return 'acerto';
+  }
+
+  return 'erro';
 }
 
 function matchesFilter(prediction: Sprint3PredictionWithMatchRecord, filter: PredictionFilter) {
@@ -174,7 +184,7 @@ export default function MyPredictions() {
           <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
             {filteredPredictions.map((prediction) => {
               const status = predictionStatus(prediction);
-              const isExact = prediction.points === 10;
+              const isExact = prediction.points === 25;
 
               return (
                 <article className={`relative rounded-[16px] p-5 ${cardClass(prediction)}`} key={prediction.id}>

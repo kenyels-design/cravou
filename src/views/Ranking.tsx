@@ -295,8 +295,8 @@ export default function Ranking() {
                 onClick={() => setShowScoringRules((current) => !current)}
                 type="button"
               >
-                <span aria-hidden="true">📋</span>
-                <span>Regras de Pontuação</span>
+                <span aria-hidden="true">ðŸ“‹</span>
+                <span>Regras de PontuaÃ§Ã£o</span>
               </button>
 
               <div
@@ -307,21 +307,42 @@ export default function Ranking() {
                 <div className="rounded-[24px] border border-[#2A2A2A] bg-[#141414] p-5 text-white">
                   <div className="space-y-4">
                     <div>
-                      <p className="text-sm font-black tracking-tight text-[#F4D35E]">🟡 PLACAR EXATO → 10 pontos</p>
-                      <p className="mt-1 text-sm text-gray-300">Voce acertou o resultado preciso do jogo.</p>
+                      <p className="text-sm font-black tracking-tight text-[#F4D35E]">🥇 PLACAR EXATO → 25 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Acertou o placar completo do jogo.</p>
                       <p className="mt-1 text-sm text-gray-400">Exemplo: apostou 2x1 e terminou 2x1.</p>
                     </div>
 
                     <div>
-                      <p className="text-sm font-black tracking-tight text-[#4ADE80]">🟢 DESFECHO CORRETO → 5 pontos</p>
-                      <p className="mt-1 text-sm text-gray-300">Acertou quem venceu ou que seria empate, mas errou o placar exato.</p>
-                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou 2x1 e terminou 3x0.</p>
+                      <p className="text-sm font-black tracking-tight text-[#EAB308]">🏆 VENCEDOR + GOLS DO VENCEDOR → 18 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Acertou o vencedor e a quantidade de gols que ele marcou.</p>
+                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou 4x0 e terminou 4x2.</p>
                     </div>
 
                     <div>
-                      <p className="text-sm font-black tracking-tight text-[#F87171]">🔴 ERRO → 0 pontos</p>
-                      <p className="mt-1 text-sm text-gray-300">Errou o desfecho do jogo.</p>
-                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou vitoria e houve empate.</p>
+                      <p className="text-sm font-black tracking-tight text-[#38BDF8]">⚖️ VENCEDOR + SALDO DE GOLS → 15 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Acertou o vencedor e a diferença de gols entre os times.</p>
+                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou 2x0 e terminou 4x2 (saldo = 2).</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-black tracking-tight text-[#A78BFA]">🎯 VENCEDOR + GOLS DO PERDEDOR → 12 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Acertou o vencedor e a quantidade de gols que o perdedor marcou.</p>
+                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou 2x1 e terminou 3x1.</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-black tracking-tight text-[#4ADE80]">✅ VENCEDOR CERTO → 10 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Acertou apenas quem venceu, ou acertou que seria empate.</p>
+                      <p className="mt-1 text-sm text-gray-400">Exemplo: apostou 1x0 e terminou 3x1. Ou apostou 1x1 e terminou 3x3.</p>
+                    </div>
+
+                    <div>
+                      <p className="text-sm font-black tracking-tight text-[#F87171]">❌ SEM PONTOS → 0 pontos</p>
+                      <p className="mt-1 text-sm text-gray-300">Errou o resultado do jogo.</p>
+                    </div>
+
+                    <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                      <p className="text-sm font-semibold text-white">Nota: partidas a partir das oitavas de final valem o dobro.</p>
                     </div>
                   </div>
                 </div>
@@ -512,7 +533,7 @@ export default function Ranking() {
                             />
                           </div>
                           <div className="mt-3 flex items-center justify-between text-xs uppercase tracking-[0.18em] text-[#555566] dark:text-gray-500">
-                            <span>MÉDIA DE PONTOS</span>
+                            <span>MÃ‰DIA DE PONTOS</span>
                             <span>{averagePointsLabel}</span>
                           </div>
                         </div>
