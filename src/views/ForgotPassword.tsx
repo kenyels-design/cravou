@@ -39,10 +39,13 @@ export default function ForgotPassword() {
       setSuccessMessage('Enviamos um link de redefinicao para seu e-mail corporativo.');
       setEmail('');
     } catch (error) {
-      const message =
+      const raw =
         error && typeof error === 'object' && 'message' in error
           ? (error as AuthError).message
-          : 'Nao foi possivel enviar o e-mail de recuperacao.';
+          : '';
+      const message = raw.toLowerCase().includes('rate limit')
+        ? 'Limite de envios atingido. Aguarde alguns minutos e tente novamente.'
+        : raw || 'Nao foi possivel enviar o e-mail de recuperacao.';
       setErrorMessage(message);
     } finally {
       setLoading(false);

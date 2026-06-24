@@ -11,6 +11,23 @@ import { getUserPredictionStats } from '../lib/matches';
 import { supabase } from '../lib/supabaseClient';
 import { DEPARTMENTS } from '../lib/types';
 
+type RecentHistoryMatch = {
+  home_team: string;
+  away_team: string;
+  home_score: number | null;
+  away_score: number | null;
+  match_time: string;
+  status: string;
+};
+
+type RecentHistoryRow = {
+  id: string;
+  home_score: number;
+  away_score: number;
+  points: number | null;
+  matches: RecentHistoryMatch;
+};
+
 function initials(name: string) {
   return name
     .split(' ')
@@ -18,6 +35,48 @@ function initials(name: string) {
     .slice(0, 2)
     .map((part) => part[0]?.toUpperCase() ?? '')
     .join('');
+}
+
+function pointsBadge(points: number | null) {
+  if (points === 25) {
+    return {
+      className: 'bg-[#CCFF00] text-black',
+      label: '25 pts',
+    };
+  }
+
+  if (points === 18) {
+    return {
+      className: 'bg-[#7DD3FC] text-[#082F49]',
+      label: '18 pts',
+    };
+  }
+
+  if (points === 15) {
+    return {
+      className: 'bg-[#4ADE80] text-[#052E16]',
+      label: '15 pts',
+    };
+  }
+
+  if (points === 12) {
+    return {
+      className: 'bg-[#FACC15] text-[#422006]',
+      label: '12 pts',
+    };
+  }
+
+  if (points === 10) {
+    return {
+      className: 'bg-[#E5E7EB] text-[#111827]',
+      label: '10 pts',
+    };
+  }
+
+  return {
+    className: 'bg-[#FF007F] text-black',
+    label: '0 pts',
+  };
 }
 
 export default function Profile() {
@@ -38,6 +97,9 @@ export default function Profile() {
     totalPoints: 0,
     predictionCount: 0,
   });
+  const [recentHistory, setRecentHistory] = useState<RecentHistoryRow[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(true);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   const avatarInitials = useMemo(() => initials(displayName || profile?.nome || user?.email || 'Camerite'), [displayName, profile?.nome, user?.email]);
 
@@ -90,6 +152,86 @@ export default function Profile() {
     };
 
     void loadStats();
+
+    return () => {
+      active = false;
+    };
+  }, [user?.id]);
+
+  useEffect(() => {
+    let active = true;
+
+    const loadRecentHistory = async () => {
+      if (!user?.id) {
+        if (active) {
+          setRecentHistory([]);
+          setHistoryLoading(false);
+        }
+        return;
+      }
+
+      setHistoryLoading(true);
+      setHistoryError(null);
+
+      try {
+        const { data, error } = await supabase
+          .schema('cravou')
+          .from('predictions')
+          .select('id, home_score, away_score, points, matches:match_id(home_team, away_team, home_score, away_score, match_time, status)')
+          .eq('user_id', user.id)
+          .order('matches(match_time)', { ascending: false })
+          .limit(10);
+
+        if (error) {
+          throw error;
+        }
+
+        const rows = (
+          ((data as Array<{
+            id: string;
+            home_score: number;
+            away_score: number;
+            points: number | null;
+            matches: RecentHistoryMatch | RecentHistoryMatch[] | null;
+          }> | null) ?? [])
+            .map((prediction) => {
+              const match = Array.isArray(prediction.matches)
+                ? prediction.matches[0] ?? null
+                : prediction.matches;
+
+              if (!match || match.status !== 'finalizado') {
+                return null;
+              }
+
+              return {
+                ...prediction,
+                matches: match,
+              };
+            })
+            .filter((prediction): prediction is RecentHistoryRow => prediction !== null)
+        );
+
+        if (active) {
+          setRecentHistory(rows);
+        }
+      } catch (error) {
+        const message =
+          error && typeof error === 'object' && 'message' in error
+            ? String(error.message)
+            : 'Nao foi possivel carregar seu historico recente agora.';
+
+        if (active) {
+          setRecentHistory([]);
+          setHistoryError(message);
+        }
+      } finally {
+        if (active) {
+          setHistoryLoading(false);
+        }
+      }
+    };
+
+    void loadRecentHistory();
 
     return () => {
       active = false;
@@ -286,6 +428,54 @@ export default function Profile() {
             <p className="text-xs font-bold uppercase tracking-wide text-[#555566] dark:text-gray-400">Palpites feitos</p>
             <p className="mt-3 text-5xl font-bold text-[#0A0A0A] dark:text-white">{statsLoading ? '...' : stats.predictionCount}</p>
           </article>
+        </section>
+
+        <section className="rounded-2xl border border-[#D0D0D8] bg-white p-6 shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-none">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wide text-[#CCFF00]">Historico</p>
+              <h2 className="mt-2 text-xl font-bold text-[#0A0A0A] dark:text-white">Meu Historico Recente</h2>
+            </div>
+          </div>
+
+          {historyError ? <div className="mt-4"><FeedbackBanner message={historyError} tone="error" /></div> : null}
+
+          {historyLoading ? (
+            <div className="mt-4 rounded-2xl border border-[#D0D0D8] bg-[#F6F6FA] p-6 text-center text-sm text-[#555566] dark:border-[#2A2A2A] dark:bg-[#101010] dark:text-gray-300">
+              Carregando seu historico recente...
+            </div>
+          ) : recentHistory.length === 0 ? (
+            <div className="mt-4 rounded-2xl border border-dashed border-[#D0D0D8] bg-[#F6F6FA] p-6 text-center text-sm text-[#555566] dark:border-[#2A2A2A] dark:bg-[#101010] dark:text-gray-400">
+              Seus resultados aparecerao aqui apos os primeiros jogos.
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {recentHistory.map((prediction) => {
+                const badge = pointsBadge(prediction.points);
+
+                return (
+                  <article
+                    className="flex flex-col gap-3 rounded-2xl border border-[#2A2A2A] bg-[#141414] px-4 py-3 text-white md:flex-row md:items-center md:justify-between"
+                    key={prediction.id}
+                  >
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold text-white">
+                        {prediction.matches.home_team} x {prediction.matches.away_team}
+                      </p>
+                      <div className="mt-1 flex flex-col gap-1 text-xs text-gray-300 sm:flex-row sm:flex-wrap sm:items-center sm:gap-3">
+                        <span>Seu palpite: {prediction.home_score} x {prediction.away_score}</span>
+                        <span>Real: {prediction.matches.home_score ?? '--'} x {prediction.matches.away_score ?? '--'}</span>
+                      </div>
+                    </div>
+
+                    <span className={`inline-flex w-fit rounded-full px-3 py-1 text-xs font-black uppercase tracking-wide ${badge.className}`}>
+                      {badge.label}
+                    </span>
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </section>
 
         <button
