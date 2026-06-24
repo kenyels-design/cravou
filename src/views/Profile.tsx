@@ -159,8 +159,6 @@ export default function Profile() {
   }, [user?.id]);
 
   useEffect(() => {
-    console.log('[Profile] historico useEffect disparou');
-
     let active = true;
 
     const loadRecentHistory = async () => {
@@ -180,15 +178,7 @@ export default function Profile() {
           .schema('cravou')
           .from('predictions')
           .select('id, home_score, away_score, points, matches:match_id(home_team, away_team, home_score, away_score, match_time, status)')
-          .eq('user_id', user.id)
-          .order('matches(match_time)', { ascending: false })
-          .limit(10);
-
-        console.log('[Profile] recent history raw Supabase response', {
-          userId: user.id,
-          error,
-          data,
-        });
+          .eq('user_id', user.id);
 
         if (error) {
           throw error;
@@ -207,7 +197,7 @@ export default function Profile() {
                 ? prediction.matches[0] ?? null
                 : prediction.matches;
 
-              if (!match || match.status !== 'finalizado') {
+              if (!match) {
                 return null;
               }
 
@@ -217,6 +207,12 @@ export default function Profile() {
               };
             })
             .filter((prediction): prediction is RecentHistoryRow => prediction !== null)
+            .filter((prediction) => prediction.matches.status === 'finalizado')
+            .sort(
+              (first, second) =>
+                new Date(second.matches.match_time).getTime() - new Date(first.matches.match_time).getTime(),
+            )
+            .slice(0, 10)
         );
 
         if (active) {
