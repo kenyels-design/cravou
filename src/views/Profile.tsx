@@ -159,6 +159,8 @@ export default function Profile() {
   }, [user?.id]);
 
   useEffect(() => {
+    console.log('[Profile] historico useEffect disparou');
+
     let active = true;
 
     const loadRecentHistory = async () => {
@@ -181,6 +183,12 @@ export default function Profile() {
           .eq('user_id', user.id)
           .order('matches(match_time)', { ascending: false })
           .limit(10);
+
+        console.log('[Profile] recent history raw Supabase response', {
+          userId: user.id,
+          error,
+          data,
+        });
 
         if (error) {
           throw error;
