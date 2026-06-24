@@ -180,31 +180,31 @@ export async function getMyPredictions() {
 }
 
 export async function getLeaderboard() {
-  const [{ data: users, error: usersError }, { data: predictions, error: predictionsError }] = await Promise.all([
+  const [{ data: users, error: usersError }, { data: totals, error: totalsError }] = await Promise.all([
     supabase.from('cravou_users').select('id, nome, departamento'),
-    cravou().from('predictions').select('user_id, points'),
+    cravou().rpc('get_leaderboard_totals'),
   ]);
 
   if (usersError) {
     throw usersError;
   }
 
-  if (predictionsError) {
-    throw predictionsError;
+  if (totalsError) {
+    throw totalsError;
   }
 
-  const totals = ((predictions as Pick<Sprint3PredictionRecord, 'user_id' | 'points'>[] | null) ?? []).reduce<
-    Record<string, number>
-  >((accumulator, prediction) => {
-    accumulator[prediction.user_id] = (accumulator[prediction.user_id] ?? 0) + (prediction.points ?? 0);
-    return accumulator;
-  }, {});
+  const totalsByUserId = Object.fromEntries(
+    ((totals as Array<{ user_id: string; total_points: number | string | null }> | null) ?? []).map((total) => [
+      total.user_id,
+      Number(total.total_points ?? 0),
+    ]),
+  ) as Record<string, number>;
 
   return (((users as { id: string; nome: string | null; departamento: string | null }[] | null) ?? []).map((user) => ({
     user_id: user.id,
     nome: getUserDisplayName(user),
     departamento: user.departamento,
-    total_points: totals[user.id] ?? 0,
+    total_points: totalsByUserId[user.id] ?? 0,
   })) as Sprint3LeaderboardEntry[]).sort((first, second) => {
     if (second.total_points !== first.total_points) {
       return second.total_points - first.total_points;
