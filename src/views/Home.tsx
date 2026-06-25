@@ -390,14 +390,16 @@ export default function Home() {
                   </div>
                 </section>
 
-                <section className="rounded-[28px] border border-[#E0E0E0] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_34%),#FFFFFF] p-7 shadow-[0_0_36px_rgba(204,255,0,0.16),0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.14),_transparent_34%),#141414] dark:shadow-[0_0_42px_rgba(204,255,0,0.2),0_20px_60px_rgba(0,0,0,0.32)] md:p-8">
-                  <div className="flex items-start gap-5">
-                    <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-[#CCFF00]/40 bg-[#CCFF00]/12 text-3xl shadow-[0_0_24px_rgba(204,255,0,0.2)]">
+                <section className="min-h-[168px] rounded-[28px] border-2 border-[#CCFF00] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.2),_transparent_38%),#FFFFFF] p-8 shadow-[0_0_24px_rgba(204,255,0,0.25),0_18px_50px_rgba(0,0,0,0.1)] dark:border-[#CCFF00]/80 dark:bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.22),_transparent_38%),#141414] dark:shadow-[0_0_32px_rgba(204,255,0,0.32),0_20px_60px_rgba(0,0,0,0.38)] md:min-h-[188px] md:p-9">
+                  <div className="flex min-h-[104px] items-center gap-6">
+                    <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full border-2 border-[#CCFF00] bg-[#CCFF00]/18 text-4xl shadow-[0_0_28px_rgba(204,255,0,0.3)]">
                       🌎
                     </span>
-                    <div className="min-w-0">
-                      <p className="text-sm font-black uppercase tracking-[0.32em] text-[#CCFF00]">VOCÊ SABIA?</p>
-                      <p className="mt-3 text-base leading-7 text-[#0A0A0A] dark:text-white">
+                    <div className="min-w-0 max-w-5xl">
+                      <p className="text-base font-black uppercase tracking-[0.36em] text-[#CCFF00] [text-shadow:0_1px_2px_rgba(0,0,0,0.45)] md:text-lg">
+                        VOCÊ SABIA?
+                      </p>
+                      <p className="mt-4 text-lg leading-8 text-[#0A0A0A] dark:text-white md:text-xl md:leading-9">
                         {selectedCuriosity || CURIOSITIES[0]}
                       </p>
                     </div>
