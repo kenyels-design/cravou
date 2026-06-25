@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAuth } from '../context/AuthContext';
+import { CURIOSITIES } from '../lib/curiosities';
 import { formatMatchKickoff } from '../lib/display';
 import {
   getLeaderboard,
@@ -157,6 +158,7 @@ export default function Home() {
   const [leaderboard, setLeaderboard] = useState<Sprint3LeaderboardEntry[]>([]);
   const [predictionActivity, setPredictionActivity] = useState<Sprint3PredictionActivity[]>([]);
   const [rankingMovements, setRankingMovements] = useState<Sprint3RankingMovementActivity[]>([]);
+  const [selectedCuriosity, setSelectedCuriosity] = useState('');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -197,6 +199,11 @@ export default function Home() {
   useEffect(() => {
     void loadHome();
   }, [loadHome]);
+
+  useEffect(() => {
+    const randomIndex = Math.floor(Math.random() * CURIOSITIES.length);
+    setSelectedCuriosity(CURIOSITIES[randomIndex] ?? '');
+  }, []);
 
   const safeMatches = useMemo(
     () =>
@@ -251,49 +258,65 @@ export default function Home() {
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
-            <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
-              <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Resumo pessoal</p>
-              <h1 className="mt-4 text-3xl font-black tracking-tight text-[#0A0A0A] dark:text-white">
-                Ola, {profile?.nome ?? user?.email?.split('@')[0] ?? 'Camerite'}!
-              </h1>
-              <p className="mt-2 text-sm text-zinc-600 dark:text-gray-400">
-                Seu painel rapido para acompanhar pontuacao, proximos palpites e sua posicao na disputa.
-              </p>
-
-              <div className="mt-6 grid gap-3 sm:grid-cols-3">
-                <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
-                  <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Pontuacao total</p>
-                  <p className="mt-3 text-3xl font-black text-[#CCFF00]">{myStats.totalPoints}</p>
-                </article>
-                <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
-                  <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Posicao no ranking</p>
-                  <p className="mt-3 text-3xl font-black text-[#0A0A0A] dark:text-white">
-                    {myStats.rankingPosition ? `${myStats.rankingPosition}o` : '--'}
+              <div className="space-y-5">
+                <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Resumo pessoal</p>
+                  <h1 className="mt-4 text-3xl font-black tracking-tight text-[#0A0A0A] dark:text-white">
+                    Ola, {profile?.nome ?? user?.email?.split('@')[0] ?? 'Camerite'}!
+                  </h1>
+                  <p className="mt-2 text-sm text-zinc-600 dark:text-gray-400">
+                    Seu painel rapido para acompanhar pontuacao, proximos palpites e sua posicao na disputa.
                   </p>
-                </article>
-                <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
-                  <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Palpites feitos</p>
-                  <p className="mt-3 text-3xl font-black text-[#0A0A0A] dark:text-white">{myStats.totalPredictions}</p>
-                </article>
-              </div>
 
-              <div className="mt-5 rounded-[24px] border border-[#E0E0E0] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#FFFFFF] p-5 dark:border-[#2A2A2A] dark:bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#141414]">
-                <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Proximo jogo + deadline</p>
-                {nextMatch ? (
-                  <>
-                    <h2 className="mt-3 text-2xl font-black text-[#0A0A0A] dark:text-white">
-                      {nextMatch.home_team} x {nextMatch.away_team}
-                    </h2>
-                    <p className="mt-2 text-sm text-zinc-600 dark:text-gray-400">{formatMatchKickoff(nextMatch.match_time)}</p>
-                    <p className="mt-4 inline-flex rounded-full border border-[#FF007F]/30 bg-[#FF007F]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#FF66B2]">
-                      {deadlineLabel(nextMatch.match_time)}
-                    </p>
-                  </>
-                ) : (
-                  <p className="mt-3 text-sm text-zinc-600 dark:text-gray-400">Nenhum jogo pendente encontrado no momento.</p>
-                )}
+                  <div className="mt-6 grid gap-3 sm:grid-cols-3">
+                    <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
+                      <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Pontuacao total</p>
+                      <p className="mt-3 text-3xl font-black text-[#CCFF00]">{myStats.totalPoints}</p>
+                    </article>
+                    <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
+                      <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Posicao no ranking</p>
+                      <p className="mt-3 text-3xl font-black text-[#0A0A0A] dark:text-white">
+                        {myStats.rankingPosition ? `${myStats.rankingPosition}o` : '--'}
+                      </p>
+                    </article>
+                    <article className="rounded-[22px] border border-[#E0E0E0] bg-white p-4 dark:border-[#2A2A2A] dark:bg-[#141414]">
+                      <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Palpites feitos</p>
+                      <p className="mt-3 text-3xl font-black text-[#0A0A0A] dark:text-white">{myStats.totalPredictions}</p>
+                    </article>
+                  </div>
+
+                  <div className="mt-5 rounded-[24px] border border-[#E0E0E0] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#FFFFFF] p-5 dark:border-[#2A2A2A] dark:bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#141414]">
+                    <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Proximo jogo + deadline</p>
+                    {nextMatch ? (
+                      <>
+                        <h2 className="mt-3 text-2xl font-black text-[#0A0A0A] dark:text-white">
+                          {nextMatch.home_team} x {nextMatch.away_team}
+                        </h2>
+                        <p className="mt-2 text-sm text-zinc-600 dark:text-gray-400">{formatMatchKickoff(nextMatch.match_time)}</p>
+                        <p className="mt-4 inline-flex rounded-full border border-[#FF007F]/30 bg-[#FF007F]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-[#FF66B2]">
+                          {deadlineLabel(nextMatch.match_time)}
+                        </p>
+                      </>
+                    ) : (
+                      <p className="mt-3 text-sm text-zinc-600 dark:text-gray-400">Nenhum jogo pendente encontrado no momento.</p>
+                    )}
+                  </div>
+                </section>
+
+                <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+                  <div className="flex items-start gap-4">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#CCFF00]/30 bg-[#CCFF00]/10 text-xl">
+                      🌎
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">VOCÊ SABIA?</p>
+                      <p className="mt-3 text-base leading-7 text-[#0A0A0A] dark:text-white">
+                        {selectedCuriosity || CURIOSITIES[0]}
+                      </p>
+                    </div>
+                  </div>
+                </section>
               </div>
-            </section>
 
             <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
               <div className="flex items-center justify-between gap-3">
