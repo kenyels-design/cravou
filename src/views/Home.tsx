@@ -399,8 +399,9 @@ export default function Home() {
               </div>
                 </section>
 
+                <div className="grid gap-5 md:grid-cols-2">
                 <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Ranking</p>
                   <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Top 5 do Dia</h2>
@@ -434,7 +435,7 @@ export default function Home() {
                 </section>
 
                 <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#FF007F]">Ranking</p>
                   <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Top 5 Piores do Dia</h2>
@@ -466,6 +467,7 @@ export default function Home() {
                 )}
               </div>
                 </section>
+                </div>
               </div>
             </div>
           </>
