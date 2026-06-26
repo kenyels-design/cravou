@@ -4,6 +4,13 @@ import QuickBetMode from '../components/QuickBetMode';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAppData } from '../context/AppDataContext';
 import { formatMatchKickoff, formatMatchKickoffTime, getFlagCode } from '../lib/display';
+import {
+  clearQuickBetSession,
+  readQuickBetActive,
+  readQuickBetIndex,
+  saveQuickBetActive,
+  saveQuickBetIndex,
+} from '../lib/quickBetSession';
 import type { Sprint3MatchRecord, Sprint3MatchStatus, Sprint3PredictionRecord } from '../lib/types';
 
 type MatchFilter = 'todos' | 'ao_vivo' | 'pendente' | 'finalizado' | 'sem_palpite';
@@ -145,6 +152,16 @@ function matchClosingLabel(deadline: number | null, now: number) {
   return `Fecha em ${hoursLeft}h`;
 }
 
+function isQuickBetEligible(
+  match: Sprint3MatchRecord,
+  predictions: Record<string, Sprint3PredictionRecord>,
+  now: number,
+) {
+  const deadline = getMatchDeadline(match.match_time);
+
+  return match.status === 'pendente' && !predictions[match.id] && (deadline == null || deadline > now);
+}
+
 export default function Matches() {
   const {
     matches,
@@ -154,6 +171,7 @@ export default function Matches() {
     refetchAll,
   } = useAppData();
   const [quickBetMatches, setQuickBetMatches] = useState<Sprint3MatchRecord[] | null>(null);
+  const [quickBetInitialSavedCount, setQuickBetInitialSavedCount] = useState(0);
   const [activeFilter, setActiveFilter] = useState<MatchFilter>('todos');
   const [now, setNow] = useState(() => Date.now());
 
@@ -170,6 +188,10 @@ export default function Matches() {
   const safeMatches = useMemo(
     () => (matches ?? []).filter((match): match is Sprint3MatchRecord => Boolean(match)),
     [matches],
+  );
+  const matchById = useMemo(
+    () => new Map(safeMatches.map((match) => [match.id, match])),
+    [safeMatches],
   );
   const predictions = useMemo(
     () =>
@@ -188,6 +210,60 @@ export default function Matches() {
     () => safeMatches.filter((match) => match?.status === 'pendente' && !predictions?.[match?.id]),
     [predictions, safeMatches],
   );
+
+  useEffect(() => {
+    if (isInitialLoading || quickBetMatches || safeMatches.length === 0) {
+      return;
+    }
+
+    const activeSession = readQuickBetActive();
+
+    if (!activeSession || activeSession.matchIds.length === 0) {
+      return;
+    }
+
+    const restoredMatches = activeSession.matchIds
+      .map((matchId) => matchById.get(matchId) ?? null)
+      .filter((match): match is Sprint3MatchRecord => {
+        if (!match) {
+          return false;
+        }
+
+        return isQuickBetEligible(match, predictions, now);
+      });
+
+    if (restoredMatches.length === 0) {
+      clearQuickBetSession();
+      return;
+    }
+
+    const restoredMatchIds = new Set(restoredMatches.map((match) => match.id));
+    const storedIndex = readQuickBetIndex() ?? 0;
+    const removedBeforeIndex = activeSession.matchIds
+      .slice(0, storedIndex)
+      .filter((matchId) => !restoredMatchIds.has(matchId)).length;
+    const adjustedIndex = Math.max(0, Math.min(storedIndex - removedBeforeIndex, restoredMatches.length));
+    const savedCount = activeSession.matchIds.filter((matchId) => Boolean(predictions[matchId])).length;
+
+    saveQuickBetIndex(adjustedIndex);
+    setQuickBetInitialSavedCount(savedCount);
+    setQuickBetMatches(restoredMatches);
+  }, [isInitialLoading, matchById, now, predictions, quickBetMatches, safeMatches.length]);
+
+  const openQuickBetMode = () => {
+    const matchIds = pendingMatchesWithoutPrediction.map((match) => match.id);
+
+    saveQuickBetActive(matchIds);
+    saveQuickBetIndex(0);
+    setQuickBetInitialSavedCount(0);
+    setQuickBetMatches(pendingMatchesWithoutPrediction);
+  };
+
+  const closeQuickBetMode = () => {
+    clearQuickBetSession();
+    setQuickBetInitialSavedCount(0);
+    setQuickBetMatches(null);
+  };
 
   const navigateToMatch = (matchId: string) => {
     window.location.hash = `#match/${matchId}`;
@@ -210,7 +286,7 @@ export default function Matches() {
             {pendingMatchesWithoutPrediction.length > 0 ? (
               <button
                 className="inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-[#CCFF00] px-5 py-3 text-sm font-bold uppercase tracking-wide text-black transition-all duration-150 hover:scale-105 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
-                onClick={() => setQuickBetMatches(pendingMatchesWithoutPrediction)}
+                onClick={openQuickBetMode}
                 type="button"
               >
                 {'\u26A1'} Modo Rapido
@@ -421,8 +497,9 @@ export default function Matches() {
 
       {quickBetMatches ? (
         <QuickBetMode
+          initialSavedCount={quickBetInitialSavedCount}
           matches={quickBetMatches}
-          onClose={() => setQuickBetMatches(null)}
+          onClose={closeQuickBetMode}
           onPredictionSaved={() => {
             void refetchAll();
           }}

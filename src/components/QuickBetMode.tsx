@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { formatMatchKickoff, getFlagCode } from '../lib/display';
 import { upsertPrediction } from '../lib/matches';
+import { clearQuickBetSession, readQuickBetIndex, saveQuickBetIndex } from '../lib/quickBetSession';
 import type { Sprint3MatchRecord, Sprint3PredictionRecord } from '../lib/types';
 
 interface QuickBetModeProps {
+  initialSavedCount?: number;
   matches: Sprint3MatchRecord[];
   onClose: () => void;
   onPredictionSaved: (prediction: Sprint3PredictionRecord) => void;
@@ -50,23 +52,34 @@ function renderFlag(flag: string | null, fallback: string) {
   );
 }
 
-export default function QuickBetMode({ matches, onClose, onPredictionSaved }: QuickBetModeProps) {
-  const [currentIndex, setCurrentIndex] = useState(0);
+export default function QuickBetMode({
+  initialSavedCount = 0,
+  matches,
+  onClose,
+  onPredictionSaved,
+}: QuickBetModeProps) {
+  const [currentIndex, setCurrentIndex] = useState(() => readQuickBetIndex() ?? 0);
   const [homeScore, setHomeScore] = useState('0');
   const [awayScore, setAwayScore] = useState('0');
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [savedCount, setSavedCount] = useState(0);
+  const [savedCount, setSavedCount] = useState(initialSavedCount);
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
-    setCurrentIndex(0);
+    const restoredIndex = readQuickBetIndex() ?? 0;
+
+    setCurrentIndex(Math.max(0, Math.min(restoredIndex, matches.length)));
     setHomeScore('0');
     setAwayScore('0');
     setSaving(false);
     setErrorMessage(null);
-    setSavedCount(0);
-  }, [matches]);
+    setSavedCount(initialSavedCount);
+  }, [initialSavedCount, matches]);
+
+  useEffect(() => {
+    saveQuickBetIndex(currentIndex);
+  }, [currentIndex]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -107,6 +120,17 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
     setHomeScore('0');
     setAwayScore('0');
     setErrorMessage(null);
+  };
+
+  useEffect(() => {
+    if (totalMatches === 0 || isComplete) {
+      clearQuickBetSession();
+    }
+  }, [isComplete, totalMatches]);
+
+  const handleClose = () => {
+    clearQuickBetSession();
+    onClose();
   };
 
   const handleSkip = () => {
@@ -157,7 +181,7 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
           <button
             aria-label="Fechar modo rapido"
             className="flex h-11 w-11 cursor-pointer items-center justify-center rounded-full border border-[#E0E0E0] bg-white text-xl text-[#0A0A0A] transition-all duration-150 hover:bg-[#2A2A2A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-white dark:hover:bg-[#1C1C1C]"
-            onClick={onClose}
+            onClick={handleClose}
             type="button"
           >
             X
@@ -174,7 +198,7 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
                 </h2>
                 <button
                   className="mt-8 inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-[#CCFF00] px-6 py-3 text-sm font-bold uppercase tracking-wide text-black transition-all duration-150 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
-                  onClick={onClose}
+                  onClick={handleClose}
                   type="button"
                 >
                   Voltar para jogos
@@ -189,7 +213,7 @@ export default function QuickBetMode({ matches, onClose, onPredictionSaved }: Qu
                 <p className="mt-4 text-base text-zinc-600 md:text-lg dark:text-gray-300">{savedCount} palpites salvos no modo rapido.</p>
                 <button
                   className="mt-8 inline-flex min-h-12 cursor-pointer items-center justify-center rounded-full bg-[#CCFF00] px-6 py-3 text-sm font-bold uppercase tracking-wide text-black transition-all duration-150 hover:bg-[#CCFF00]/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
-                  onClick={onClose}
+                  onClick={handleClose}
                   type="button"
                 >
                   Voltar para jogos

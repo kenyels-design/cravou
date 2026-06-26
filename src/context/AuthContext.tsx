@@ -14,6 +14,7 @@ import {
   persistAuthNotice,
   syncAndFetchUserProfile,
 } from '../lib/auth';
+import { clearQuickBetSession } from '../lib/quickBetSession';
 import type { UserProfile } from '../lib/types';
 
 interface AuthContextValue {
@@ -39,6 +40,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isRecoveryMode, setIsRecoveryMode] = useState(false);
 
   const clearAuthState = useCallback(() => {
+    clearQuickBetSession();
     setSession(null);
     setUser(null);
     setProfile(null);
@@ -140,6 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       );
 
       if (!nextSession?.user) {
+        clearQuickBetSession();
         setProfile(null);
         setProfileLoading(false);
         setAuthLoading(false);
