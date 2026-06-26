@@ -132,6 +132,13 @@ export interface Sprint3LeaderboardEntry {
   total_points: number;
 }
 
+export interface Sprint3CurrentRoundTopEntry {
+  user_id: string;
+  nome: string;
+  departamento: string | null;
+  round_points: number;
+}
+
 export interface Sprint3PredictionActivity {
   prediction_id: string;
   created_at: string;

@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { CURIOSITIES } from '../lib/curiosities';
 import { formatMatchKickoff, getFlagCode } from '../lib/display';
 import {
+  getCurrentRoundTop5,
   getLeaderboard,
   getMatches,
   getMyPredictions,
@@ -11,6 +12,7 @@ import {
   getRecentRankingMovements,
 } from '../lib/matches';
 import type {
+  Sprint3CurrentRoundTopEntry,
   Sprint3LeaderboardEntry,
   Sprint3MatchRecord,
   Sprint3PredictionActivity,
@@ -179,7 +181,7 @@ function buildFeedItems(
 
   return [...predictionItems, ...movementItems]
     .sort((left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime())
-    .slice(0, 10);
+    .slice(0, 6);
 }
 
 export default function Home() {
@@ -187,6 +189,7 @@ export default function Home() {
   const [matches, setMatches] = useState<Sprint3MatchRecord[]>([]);
   const [predictions, setPredictions] = useState<Sprint3PredictionWithMatchRecord[]>([]);
   const [leaderboard, setLeaderboard] = useState<Sprint3LeaderboardEntry[]>([]);
+  const [currentRoundTopFive, setCurrentRoundTopFive] = useState<Sprint3CurrentRoundTopEntry[]>([]);
   const [predictionActivity, setPredictionActivity] = useState<Sprint3PredictionActivity[]>([]);
   const [rankingMovements, setRankingMovements] = useState<Sprint3RankingMovementActivity[]>([]);
   const [selectedCuriosity, setSelectedCuriosity] = useState('');
@@ -198,12 +201,13 @@ export default function Home() {
     setErrorMessage(null);
 
     try {
-      const [matchRows, predictionRows, leaderboardRows, activityRows, movementRows] = await Promise.all([
+      const [matchRows, predictionRows, leaderboardRows, activityRows, movementRows, roundTopRows] = await Promise.all([
         getMatches(),
         getMyPredictions(),
         getLeaderboard(),
         getRecentPredictionActivity(10),
         getRecentRankingMovements(10),
+        getCurrentRoundTop5(),
       ]);
 
       setMatches(matchRows);
@@ -211,6 +215,7 @@ export default function Home() {
       setLeaderboard(leaderboardRows);
       setPredictionActivity(activityRows);
       setRankingMovements(movementRows);
+      setCurrentRoundTopFive(roundTopRows);
     } catch (error) {
       const message =
         error && typeof error === 'object' && 'message' in error
@@ -220,6 +225,7 @@ export default function Home() {
       setMatches([]);
       setPredictions([]);
       setLeaderboard([]);
+      setCurrentRoundTopFive([]);
       setPredictionActivity([]);
       setRankingMovements([]);
     } finally {
@@ -272,7 +278,6 @@ export default function Home() {
     };
   }, [leaderboard, predictions, user?.id]);
 
-  const topThree = useMemo(() => leaderboard.slice(0, 3), [leaderboard]);
   const feedItems = useMemo(
     () => buildFeedItems(predictionActivity, rankingMovements, leaderboard),
     [leaderboard, predictionActivity, rankingMovements],
@@ -298,7 +303,7 @@ export default function Home() {
             </div>
 
             <div className="grid gap-5 lg:grid-cols-2">
-              <div className="space-y-5 lg:col-span-2">
+              <div className="space-y-5">
                 <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Resumo pessoal</p>
                   <h1 className="mt-4 text-3xl font-black tracking-tight text-[#0A0A0A] dark:text-white">
@@ -325,7 +330,9 @@ export default function Home() {
                     </article>
                   </div>
 
-                  <div className="mt-5 rounded-[24px] border border-[#E0E0E0] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#FFFFFF] p-5 dark:border-[#2A2A2A] dark:bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#141414]">
+                </section>
+
+                <section className="rounded-[28px] border border-[#E0E0E0] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#FFFFFF] p-5 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.12),_transparent_35%),#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">Proximos jogos</p>
@@ -387,9 +394,10 @@ export default function Home() {
                     ) : (
                       <p className="mt-3 text-sm text-zinc-600 dark:text-gray-400">Nenhum jogo pendente encontrado no momento.</p>
                     )}
-                  </div>
                 </section>
+              </div>
 
+              <div className="space-y-5">
                 <section className="min-h-[168px] rounded-[28px] border-2 border-[#CCFF00] bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.2),_transparent_38%),#FFFFFF] p-8 shadow-[0_0_24px_rgba(204,255,0,0.25),0_18px_50px_rgba(0,0,0,0.1)] dark:border-[#CCFF00]/80 dark:bg-[radial-gradient(circle_at_top_left,_rgba(204,255,0,0.22),_transparent_38%),#141414] dark:shadow-[0_0_32px_rgba(204,255,0,0.32),0_20px_60px_rgba(0,0,0,0.38)] md:min-h-[188px] md:p-9">
                   <div className="flex min-h-[104px] items-center gap-6">
                     <span className="flex h-[72px] w-[72px] shrink-0 items-center justify-center rounded-full border-2 border-[#CCFF00] bg-[#CCFF00]/18 text-4xl shadow-[0_0_28px_rgba(204,255,0,0.3)]">
@@ -405,9 +413,7 @@ export default function Home() {
                     </div>
                   </div>
                 </section>
-              </div>
-
-            <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+                <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#FF007F]">Movimentacoes</p>
@@ -436,13 +442,13 @@ export default function Home() {
                   <p className="text-sm text-zinc-600 dark:text-gray-400">Ainda nao ha atividades recentes para mostrar.</p>
                 )}
               </div>
-            </section>
+                </section>
 
-            <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+                <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Ranking</p>
-                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Top 3 da rodada</h2>
+                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Top 5 da rodada</h2>
                 </div>
                 <a
                   className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#CCFF00] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#CCFF00] transition-all duration-150 hover:bg-[#CCFF00] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
@@ -453,8 +459,8 @@ export default function Home() {
               </div>
 
               <div className="mt-5 space-y-3">
-                {topThree.length > 0 ? (
-                  topThree.map((entry, index) => (
+                {currentRoundTopFive.length > 0 ? (
+                  currentRoundTopFive.map((entry, index) => (
                     <article
                       className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border border-[#E0E0E0] bg-white px-4 py-3 dark:border-[#2A2A2A] dark:bg-[#141414]"
                       key={entry.user_id}
@@ -463,55 +469,15 @@ export default function Home() {
                       <div className="min-w-0">
                         <p className="truncate text-sm font-semibold text-[#0A0A0A] dark:text-white">{entry.nome}</p>
                       </div>
-                      <span className="text-sm font-black text-[#CCFF00]">{entry.total_points} pts</span>
+                      <span className="text-sm font-black text-[#CCFF00]">{entry.round_points} pts</span>
                     </article>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-600 dark:text-gray-400">Ainda nao ha ranking consolidado.</p>
+                  <p className="text-sm text-zinc-600 dark:text-gray-400">Ainda nao ha pontuacao consolidada para a rodada.</p>
                 )}
               </div>
-            </section>
-
-            <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#FF007F]">Agenda</p>
-                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Proximos jogos</h2>
-                </div>
-                <a
-                  className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#E0E0E0] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#0A0A0A] transition-all duration-150 hover:bg-[#2A2A2A] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95 dark:border-[#2A2A2A] dark:text-white dark:hover:bg-[#2A2A2A]"
-                  href="#jogos"
-                >
-                  Ver todos os jogos
-                </a>
+                </section>
               </div>
-
-              <div className="mt-5 space-y-3">
-                {nextPendingMatches.slice(0, 3).length > 0 ? (
-                  nextPendingMatches.slice(0, 3).map((match) => (
-                    <article
-                      className="rounded-[22px] border border-[#E0E0E0] bg-white px-4 py-4 dark:border-[#2A2A2A] dark:bg-[#141414]"
-                      key={match.id}
-                    >
-                      <div className="flex items-start justify-between gap-3">
-                        <div>
-                          <p className="text-xs uppercase tracking-[0.18em] text-zinc-500 dark:text-gray-500">{match.round}</p>
-                          <h3 className="mt-2 text-lg font-black text-[#0A0A0A] dark:text-white">
-                            {match.home_team} x {match.away_team}
-                          </h3>
-                          <p className="mt-2 text-sm text-zinc-600 dark:text-gray-400">{formatMatchKickoff(match.match_time)}</p>
-                        </div>
-                        <span className="rounded-full border border-[#CCFF00]/20 bg-[#CCFF00]/10 px-3 py-1 text-xs font-bold uppercase tracking-[0.16em] text-[#CCFF00]">
-                          Pendente
-                        </span>
-                      </div>
-                    </article>
-                  ))
-                ) : (
-                  <p className="text-sm text-zinc-600 dark:text-gray-400">Nao ha proximos jogos pendentes para exibir.</p>
-                )}
-              </div>
-            </section>
             </div>
           </>
         )}
