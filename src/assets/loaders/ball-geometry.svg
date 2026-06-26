@@ -1,0 +1,149 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" role="img" aria-label="Camerite Copa loading soccer ball geometry">
+  <defs>
+    <filter id="limeGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="2.8" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="0.8 0 0 0 0.8  0 1 0 0 1  0 0 0 0 0  0 0 0 .9 0" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="pinkGlow" x="-70%" y="-70%" width="240%" height="240%">
+      <feGaussianBlur stdDeviation="2.1" result="blur"/>
+      <feColorMatrix in="blur" type="matrix"
+        values="1 0 0 0 1  0 .05 0 0 0  0 0 .55 0 .5  0 0 0 .85 0" result="glow"/>
+      <feMerge><feMergeNode in="glow"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="innerCard">
+      <rect x="22" y="22" width="196" height="196" rx="28"/>
+    </clipPath>
+  </defs>
+
+  <style>
+    :root {
+      --bg: #0A0A0A;
+      --card: #141414;
+      --border: #2A2A2A;
+      --lime: #CCFF00;
+      --pink: #FF007F;
+    }
+
+    #cardFrame {
+      fill: #141414;
+      stroke: #2A2A2A;
+      stroke-width: 2;
+    }
+
+    #ball {
+      transform-origin: 120px 120px;
+      filter: url(#limeGlow);
+      animation: ballZoom 3.2s cubic-bezier(.7,0,.2,1) infinite;
+    }
+
+    .ballLine {
+      fill: none;
+      stroke: #CCFF00;
+      stroke-width: 3.3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      stroke-dasharray: 42 252;
+      animation: lineTravel 3.2s linear infinite;
+    }
+
+    .thinLine {
+      fill: none;
+      stroke: #CCFF00;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: .78;
+      stroke-dasharray: 32 220;
+      animation: lineTravelReverse 3.2s linear infinite;
+    }
+
+    #core {
+      fill: #141414;
+      stroke: #FF007F;
+      stroke-width: 2.4;
+      filter: url(#pinkGlow);
+      transform-origin: 120px 120px;
+      animation: coreBeat 3.2s ease-in-out infinite;
+    }
+
+    #orbit {
+      fill: none;
+      stroke: #FF007F;
+      stroke-width: 1.8;
+      stroke-dasharray: 2 15;
+      opacity: .75;
+      filter: url(#pinkGlow);
+      transform-origin: 120px 120px;
+      animation: orbitSpin 3.2s linear infinite;
+    }
+
+    #loadingText {
+      font: 900 13px/1 Arial Black, Impact, system-ui, sans-serif;
+      letter-spacing: 1.4px;
+      text-anchor: middle;
+      fill: #CCFF00;
+      opacity: .82;
+      filter: url(#limeGlow);
+      animation: textFade 3.2s ease-in-out infinite;
+    }
+
+    @keyframes ballZoom {
+      0%, 100% { transform: translate(0,0) rotate(0deg) scale(.44); opacity: .88; }
+      18% { transform: translate(-10px,1px) rotate(52deg) scale(.72); opacity: 1; }
+      38% { transform: translate(0,0) rotate(140deg) scale(1.05); opacity: 1; }
+      50% { transform: translate(34px,-18px) rotate(190deg) scale(2.3); opacity: .95; }
+      62% { transform: translate(-24px,15px) rotate(245deg) scale(.62); opacity: 1; }
+      80% { transform: translate(7px,0) rotate(308deg) scale(.92); opacity: 1; }
+    }
+
+    @keyframes lineTravel {
+      0% { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -294; }
+    }
+
+    @keyframes lineTravelReverse {
+      0% { stroke-dashoffset: -252; }
+      100% { stroke-dashoffset: 0; }
+    }
+
+    @keyframes coreBeat {
+      0%, 100% { transform: scale(.78); opacity: .5; }
+      40%, 56% { transform: scale(1); opacity: .95; }
+      72% { transform: scale(.85); opacity: .65; }
+    }
+
+    @keyframes orbitSpin {
+      0% { transform: rotate(0deg) scale(.82); opacity: .35; }
+      45% { opacity: .9; }
+      100% { transform: rotate(360deg) scale(.82); opacity: .35; }
+    }
+
+    @keyframes textFade {
+      0%, 100% { opacity: .45; }
+      40%, 58% { opacity: .95; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation: none !important; }
+    }
+  </style>
+
+  <rect width="240" height="240" fill="#0A0A0A"/>
+  <rect id="cardFrame" x="22" y="22" width="196" height="196" rx="28"/>
+
+  <g clip-path="url(#innerCard)">
+    <circle id="orbit" cx="120" cy="120" r="86" fill="none" stroke="#FF007F" stroke-width="1.8" opacity=".75"/>
+
+    <g id="ball">
+      <circle class="ballLine" cx="120" cy="120" r="58" fill="none" stroke="#CCFF00" stroke-width="3.3"/>
+      <path id="core" fill="#141414" stroke="#FF007F" stroke-width="2.4" d="M120 83l35 25-13 41h-44l-13-41Z"/>
+      <path class="ballLine" fill="none" stroke="#CCFF00" stroke-width="3.3" stroke-linecap="round" stroke-linejoin="round" d="M120 83V58M155 108l28-10M142 149l19 25M98 149l-19 25M85 108l-28-10"/>
+      <path class="thinLine" fill="none" stroke="#CCFF00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".78" d="M92 73l28-15 28 15M167 84l16 14-1 36-21 40M73 84L57 98l1 36 21 40M99 149l-21-15 7-26 7-35M141 149l21-15-7-26-7-35"/>
+      <path class="thinLine" fill="none" stroke="#CCFF00" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity=".78" d="M98 149l-18 22M142 149l18 22M85 108l-27 26M155 108l27 26"/>
+    </g>
+
+    <text id="loadingText" x="120" y="205" fill="#CCFF00" text-anchor="middle" font-family="Arial Black, Impact, system-ui, sans-serif" font-size="13" font-weight="900" letter-spacing="1.4">CARREGANDO</text>
+  </g>
+</svg>

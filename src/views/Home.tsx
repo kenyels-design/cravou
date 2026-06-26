@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import AppLoader from '../components/AppLoader';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
@@ -243,7 +244,7 @@ export default function Home() {
 
         {isInitialLoading ? (
           <div className="rounded-[28px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
-            Carregando tela inicial...
+            <AppLoader />
           </div>
         ) : (
           <>

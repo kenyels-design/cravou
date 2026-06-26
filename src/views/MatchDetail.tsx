@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import AppLoader from '../components/AppLoader';
 import { Button } from '../components/ui/Button';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAppData } from '../context/AppDataContext';
@@ -356,7 +357,7 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
 
         {isInitialLoading ? (
           <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
-            Carregando jogo...
+            <AppLoader />
           </div>
         ) : !match ? (
           <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">

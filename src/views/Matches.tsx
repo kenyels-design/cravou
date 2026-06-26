@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import AppLoader from '../components/AppLoader';
 import QuickBetMode from '../components/QuickBetMode';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
 import { useAppData } from '../context/AppDataContext';
@@ -244,7 +245,7 @@ export default function Matches() {
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
         {isInitialLoading ? (
           <div className="rounded-[16px] border border-[#D0D0D8] bg-white p-10 text-center text-sm text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300 dark:shadow-none">
-            Carregando jogos e palpites...
+            <AppLoader />
           </div>
         ) : groupedMatches.length === 0 ? (
           <div className="rounded-[16px] border border-dashed border-[#D0D0D8] bg-white p-10 text-center text-sm text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400 dark:shadow-none">
