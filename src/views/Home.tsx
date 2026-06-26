@@ -184,6 +184,7 @@ export default function Home() {
     predictions,
     leaderboard,
     currentRoundTopFive,
+    currentRoundBottomFive,
     predictionActivity,
     rankingMovements,
     isInitialLoading,
@@ -402,7 +403,7 @@ export default function Home() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#CCFF00]">Ranking</p>
-                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Top 5 da rodada</h2>
+                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Top 5 do Dia</h2>
                 </div>
                 <a
                   className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#CCFF00] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#CCFF00] transition-all duration-150 hover:bg-[#CCFF00] hover:text-black focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#CCFF00] active:scale-95"
@@ -427,7 +428,41 @@ export default function Home() {
                     </article>
                   ))
                 ) : (
-                  <p className="text-sm text-zinc-600 dark:text-gray-400">Ainda nao ha pontuacao consolidada para a rodada.</p>
+                  <p className="text-sm text-zinc-600 dark:text-gray-400">Ainda nao ha pontuacao consolidada para o dia.</p>
+                )}
+              </div>
+                </section>
+
+                <section className="rounded-[28px] border border-[#E0E0E0] bg-white p-6 shadow-[0_20px_60px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:shadow-[0_20px_60px_rgba(0,0,0,0.28)]">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-[0.24em] text-[#FF007F]">Ranking</p>
+                  <h2 className="mt-2 text-2xl font-black text-[#0A0A0A] dark:text-white">Top 5 Piores do Dia</h2>
+                </div>
+                <a
+                  className="inline-flex cursor-pointer items-center justify-center rounded-full border border-[#FF007F] px-4 py-2 text-xs font-bold uppercase tracking-[0.18em] text-[#FF007F] transition-all duration-150 hover:bg-[#FF007F] hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#FF007F] active:scale-95"
+                  href="#ranking"
+                >
+                  Ver ranking completo
+                </a>
+              </div>
+
+              <div className="mt-5 space-y-3">
+                {currentRoundBottomFive.length > 0 ? (
+                  currentRoundBottomFive.map((entry, index) => (
+                    <article
+                      className="grid grid-cols-[36px_minmax(0,1fr)_auto] items-center gap-3 rounded-[22px] border border-[#E0E0E0] bg-white px-4 py-3 dark:border-[#2A2A2A] dark:bg-[#141414]"
+                      key={entry.user_id}
+                    >
+                      <span className={`text-lg font-black ${index === 0 ? 'text-[#FF007F]' : 'text-[#0A0A0A] dark:text-white'}`}>{index + 1}</span>
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-semibold text-[#0A0A0A] dark:text-white">{entry.nome}</p>
+                      </div>
+                      <span className="text-sm font-black text-[#FF007F]">{entry.round_points} pts</span>
+                    </article>
+                  ))
+                ) : (
+                  <p className="text-sm text-zinc-600 dark:text-gray-400">Ninguem com pontuacao consolidada ainda hoje.</p>
                 )}
               </div>
                 </section>

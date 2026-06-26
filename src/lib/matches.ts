@@ -235,6 +235,26 @@ export async function getCurrentRoundTop5() {
   })) as Sprint3CurrentRoundTopEntry[]);
 }
 
+export async function getCurrentRoundBottom5() {
+  const { data, error } = await cravou().rpc('get_current_round_bottom5');
+
+  if (error) {
+    throw error;
+  }
+
+  return (((data as Array<{
+    user_id: string;
+    nome: string | null;
+    departamento: string | null;
+    round_points: number | string | null;
+  }> | null) ?? []).map((entry) => ({
+    user_id: entry.user_id,
+    nome: getUserDisplayName({ nome: entry.nome }),
+    departamento: entry.departamento,
+    round_points: Number(entry.round_points ?? 0),
+  })) as Sprint3CurrentRoundTopEntry[]);
+}
+
 export async function getRecentPredictionActivity(limit = 5) {
   const { data: predictions, error: predictionsError } = await cravou()
     .from('predictions')

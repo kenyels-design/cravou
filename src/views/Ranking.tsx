@@ -254,7 +254,7 @@ export default function Ranking() {
               <div>
                 <p className="text-xs font-bold uppercase tracking-[0.28em] text-[#CCFF00]">Ranking</p>
                 <h2 className="mt-3 text-3xl font-black tracking-tight text-[#0A0A0A] dark:text-white">
-                  {mode === 'geral' ? 'Podio da rodada' : 'Performance por departamento'}
+                  {mode === 'geral' ? 'Podio do dia' : 'Performance por departamento'}
                 </h2>
                 <p className="mt-2 max-w-2xl text-sm text-[#555566] dark:text-gray-400">
                   {mode === 'geral'

@@ -10,6 +10,7 @@ import {
 } from 'react';
 import { useAuth } from './AuthContext';
 import {
+  getCurrentRoundBottom5,
   getCurrentRoundTop5,
   getLeaderboard,
   getMatches,
@@ -31,6 +32,7 @@ interface AppDataContextValue {
   predictions: Sprint3PredictionWithMatchRecord[];
   leaderboard: Sprint3LeaderboardEntry[];
   currentRoundTopFive: Sprint3CurrentRoundTopEntry[];
+  currentRoundBottomFive: Sprint3CurrentRoundTopEntry[];
   predictionActivity: Sprint3PredictionActivity[];
   rankingMovements: Sprint3RankingMovementActivity[];
   isInitialLoading: boolean;
@@ -54,6 +56,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
   const [predictions, setPredictions] = useState<Sprint3PredictionWithMatchRecord[]>([]);
   const [leaderboard, setLeaderboard] = useState<Sprint3LeaderboardEntry[]>([]);
   const [currentRoundTopFive, setCurrentRoundTopFive] = useState<Sprint3CurrentRoundTopEntry[]>([]);
+  const [currentRoundBottomFive, setCurrentRoundBottomFive] = useState<Sprint3CurrentRoundTopEntry[]>([]);
   const [predictionActivity, setPredictionActivity] = useState<Sprint3PredictionActivity[]>([]);
   const [rankingMovements, setRankingMovements] = useState<Sprint3RankingMovementActivity[]>([]);
   const [isInitialLoading, setIsInitialLoading] = useState(false);
@@ -69,6 +72,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setPredictions([]);
     setLeaderboard([]);
     setCurrentRoundTopFive([]);
+    setCurrentRoundBottomFive([]);
     setPredictionActivity([]);
     setRankingMovements([]);
     setErrorMessage(null);
@@ -95,13 +99,22 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
     setErrorMessage(null);
 
     try {
-      const [matchRows, predictionRows, leaderboardRows, activityRows, movementRows, roundTopRows] = await Promise.all([
+      const [
+        matchRows,
+        predictionRows,
+        leaderboardRows,
+        activityRows,
+        movementRows,
+        roundTopRows,
+        roundBottomRows,
+      ] = await Promise.all([
         getMatches(),
         getMyPredictions(),
         getLeaderboard(),
         getRecentPredictionActivity(10),
         getRecentRankingMovements(10),
         getCurrentRoundTop5(),
+        getCurrentRoundBottom5(),
       ]);
 
       if (requestIdRef.current !== requestId) {
@@ -114,6 +127,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       setPredictionActivity(activityRows);
       setRankingMovements(movementRows);
       setCurrentRoundTopFive(roundTopRows);
+      setCurrentRoundBottomFive(roundBottomRows);
     } catch (error) {
       if (requestIdRef.current === requestId) {
         setErrorMessage(errorToMessage(error));
@@ -147,6 +161,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       predictions,
       leaderboard,
       currentRoundTopFive,
+      currentRoundBottomFive,
       predictionActivity,
       rankingMovements,
       isInitialLoading,
@@ -155,6 +170,7 @@ export function AppDataProvider({ children }: { children: ReactNode }) {
       refetchAll,
     }),
     [
+      currentRoundBottomFive,
       currentRoundTopFive,
       errorMessage,
       isInitialLoading,
