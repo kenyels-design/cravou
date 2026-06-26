@@ -1,18 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
+import { useAppData } from '../context/AppDataContext';
 import { useAuth } from '../context/AuthContext';
 import { CURIOSITIES } from '../lib/curiosities';
 import { formatMatchKickoff, getFlagCode } from '../lib/display';
-import {
-  getCurrentRoundTop5,
-  getLeaderboard,
-  getMatches,
-  getMyPredictions,
-  getRecentPredictionActivity,
-  getRecentRankingMovements,
-} from '../lib/matches';
 import type {
-  Sprint3CurrentRoundTopEntry,
   Sprint3LeaderboardEntry,
   Sprint3MatchRecord,
   Sprint3PredictionActivity,
@@ -186,56 +178,17 @@ function buildFeedItems(
 
 export default function Home() {
   const { profile, user } = useAuth();
-  const [matches, setMatches] = useState<Sprint3MatchRecord[]>([]);
-  const [predictions, setPredictions] = useState<Sprint3PredictionWithMatchRecord[]>([]);
-  const [leaderboard, setLeaderboard] = useState<Sprint3LeaderboardEntry[]>([]);
-  const [currentRoundTopFive, setCurrentRoundTopFive] = useState<Sprint3CurrentRoundTopEntry[]>([]);
-  const [predictionActivity, setPredictionActivity] = useState<Sprint3PredictionActivity[]>([]);
-  const [rankingMovements, setRankingMovements] = useState<Sprint3RankingMovementActivity[]>([]);
+  const {
+    matches,
+    predictions,
+    leaderboard,
+    currentRoundTopFive,
+    predictionActivity,
+    rankingMovements,
+    isInitialLoading,
+    errorMessage,
+  } = useAppData();
   const [selectedCuriosity, setSelectedCuriosity] = useState('');
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  const loadHome = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const [matchRows, predictionRows, leaderboardRows, activityRows, movementRows, roundTopRows] = await Promise.all([
-        getMatches(),
-        getMyPredictions(),
-        getLeaderboard(),
-        getRecentPredictionActivity(10),
-        getRecentRankingMovements(10),
-        getCurrentRoundTop5(),
-      ]);
-
-      setMatches(matchRows);
-      setPredictions(predictionRows);
-      setLeaderboard(leaderboardRows);
-      setPredictionActivity(activityRows);
-      setRankingMovements(movementRows);
-      setCurrentRoundTopFive(roundTopRows);
-    } catch (error) {
-      const message =
-        error && typeof error === 'object' && 'message' in error
-          ? String(error.message)
-          : 'Nao foi possivel carregar a tela inicial agora.';
-      setErrorMessage(message);
-      setMatches([]);
-      setPredictions([]);
-      setLeaderboard([]);
-      setCurrentRoundTopFive([]);
-      setPredictionActivity([]);
-      setRankingMovements([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadHome();
-  }, [loadHome]);
 
   useEffect(() => {
     const randomIndex = Math.floor(Math.random() * CURIOSITIES.length);
@@ -288,7 +241,7 @@ export default function Home() {
       <div className="mx-auto max-w-6xl space-y-5">
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
 
-        {loading ? (
+        {isInitialLoading ? (
           <div className="rounded-[28px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-400">
             Carregando tela inicial...
           </div>

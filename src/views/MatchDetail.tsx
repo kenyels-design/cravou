@@ -1,9 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../components/ui/Button';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
-import { useAuth } from '../context/AuthContext';
+import { useAppData } from '../context/AppDataContext';
 import { formatMatchKickoff, getFlagCode, normalizeDepartmentName } from '../lib/display';
-import { getMatches, getMyPredictions, upsertPrediction } from '../lib/matches';
+import { upsertPrediction } from '../lib/matches';
 import { supabase } from '../lib/supabaseClient';
 import type { Sprint3MatchRecord, Sprint3PredictionRecord } from '../lib/types';
 
@@ -122,132 +122,173 @@ function getMatchDeadline(matchTime: string) {
   return kickoff - 60 * 60 * 1000;
 }
 
+async function getEveryonePredictions(matchId: string) {
+  const [{ data: predictionsData, error: predictionsError }, { data: usersData, error: usersError }] =
+    await Promise.all([
+      supabase
+        .schema('cravou')
+        .from('predictions')
+        .select('home_score, away_score, points, user_id')
+        .eq('match_id', matchId)
+        .order('points', { ascending: false }),
+      supabase.from('cravou_users').select('id, nome, departamento'),
+    ]);
+
+  if (predictionsError) {
+    throw predictionsError;
+  }
+
+  if (usersError) {
+    throw usersError;
+  }
+
+  const predictionMap = new Map<
+    string,
+    {
+      home_score: number | null;
+      away_score: number | null;
+      points: number | null;
+    }
+  >();
+
+  (((predictionsData as
+    | Array<{
+        user_id: string;
+        home_score: number | null;
+        away_score: number | null;
+        points: number | null;
+      }>
+    | null) ?? [])).forEach((entry) => {
+    predictionMap.set(entry.user_id, entry);
+  });
+
+  const users =
+    ((usersData as Array<{ id: string; nome: string | null; departamento: string | null }> | null) ?? []).map((entry) => {
+      const predictionEntry = predictionMap.get(entry.id);
+
+      return {
+        userId: entry.id,
+        nome: entry.nome?.trim() || 'Participante',
+        departamento: entry.departamento ?? null,
+        homeScore: predictionEntry?.home_score ?? null,
+        awayScore: predictionEntry?.away_score ?? null,
+        points: predictionEntry?.points ?? null,
+        hasPrediction: Boolean(predictionEntry),
+      };
+    });
+
+  const withPrediction = users
+    .filter((entry) => entry.hasPrediction)
+    .sort((left, right) => {
+      const leftPoints = left.points ?? -1;
+      const rightPoints = right.points ?? -1;
+
+      if (rightPoints !== leftPoints) {
+        return rightPoints - leftPoints;
+      }
+
+      return left.nome.localeCompare(right.nome, 'pt-BR');
+    });
+
+  const withoutPrediction = users
+    .filter((entry) => !entry.hasPrediction)
+    .sort((left, right) => left.nome.localeCompare(right.nome, 'pt-BR'));
+
+  return [...withPrediction, ...withoutPrediction];
+}
+
+function errorToMessage(error: unknown) {
+  return error && typeof error === 'object' && 'message' in error
+    ? String(error.message)
+    : 'Nao foi possivel carregar os detalhes deste jogo.';
+}
+
 export default function MatchDetail({ matchId }: MatchDetailProps) {
-  const { user } = useAuth();
-  const [match, setMatch] = useState<Sprint3MatchRecord | null>(null);
-  const [prediction, setPrediction] = useState<Sprint3PredictionRecord | null>(null);
+  const {
+    matches,
+    predictions,
+    isInitialLoading,
+    errorMessage: appDataErrorMessage,
+    refetchAll,
+  } = useAppData();
+  const [optimisticPrediction, setOptimisticPrediction] = useState<Sprint3PredictionRecord | null>(null);
   const [everyonePredictions, setEveryonePredictions] = useState<EveryonePredictionRow[]>([]);
   const [isEditing, setIsEditing] = useState(false);
   const [homeScore, setHomeScore] = useState('0');
   const [awayScore, setAwayScore] = useState('0');
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [detailErrorMessage, setDetailErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
-  const loadData = useCallback(async () => {
-    if (!user) {
+  const match = useMemo(
+    () => matches.find((item) => item.id === matchId) ?? null,
+    [matchId, matches],
+  );
+  const contextPrediction = useMemo(
+    () => predictions.find((item) => item.match_id === matchId) ?? null,
+    [matchId, predictions],
+  );
+  const prediction =
+    optimisticPrediction?.match_id === matchId
+      ? optimisticPrediction
+      : contextPrediction;
+
+  useEffect(() => {
+    setOptimisticPrediction(null);
+    setIsEditing(false);
+    setDetailErrorMessage(null);
+    setSuccessMessage(null);
+  }, [matchId]);
+
+  useEffect(() => {
+    if (!optimisticPrediction || optimisticPrediction.match_id !== matchId || !contextPrediction) {
       return;
     }
 
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const [matchRows, predictionRows] = await Promise.all([getMatches(), getMyPredictions()]);
-      const foundMatch = matchRows.find((item) => item.id === matchId) ?? null;
-      const foundPrediction = predictionRows.find((item) => item.match_id === matchId) ?? null;
-
-      let everyoneRows: EveryonePredictionRow[] = [];
-
-      if (foundMatch?.status === 'finalizado') {
-        const [{ data: predictionsData, error: predictionsError }, { data: usersData, error: usersError }] =
-          await Promise.all([
-            supabase
-              .schema('cravou')
-              .from('predictions')
-              .select('home_score, away_score, points, user_id')
-              .eq('match_id', matchId)
-              .order('points', { ascending: false }),
-            supabase.from('cravou_users').select('id, nome, departamento'),
-          ]);
-
-        if (predictionsError) {
-          throw predictionsError;
-        }
-
-        if (usersError) {
-          throw usersError;
-        }
-
-        const predictionMap = new Map<
-          string,
-          {
-            home_score: number | null;
-            away_score: number | null;
-            points: number | null;
-          }
-        >();
-
-        (((predictionsData as
-          | Array<{
-              user_id: string;
-              home_score: number | null;
-              away_score: number | null;
-              points: number | null;
-            }>
-          | null) ?? [])).forEach((entry) => {
-          predictionMap.set(entry.user_id, entry);
-        });
-
-        const users =
-          ((usersData as Array<{ id: string; nome: string | null; departamento: string | null }> | null) ?? []).map((entry) => {
-            const predictionEntry = predictionMap.get(entry.id);
-
-            return {
-              userId: entry.id,
-              nome: entry.nome?.trim() || 'Participante',
-              departamento: entry.departamento ?? null,
-              homeScore: predictionEntry?.home_score ?? null,
-              awayScore: predictionEntry?.away_score ?? null,
-              points: predictionEntry?.points ?? null,
-              hasPrediction: Boolean(predictionEntry),
-            };
-          });
-
-        const withPrediction = users
-          .filter((entry) => entry.hasPrediction)
-          .sort((left, right) => {
-            const leftPoints = left.points ?? -1;
-            const rightPoints = right.points ?? -1;
-
-            if (rightPoints !== leftPoints) {
-              return rightPoints - leftPoints;
-            }
-
-            return left.nome.localeCompare(right.nome, 'pt-BR');
-          });
-
-        const withoutPrediction = users
-          .filter((entry) => !entry.hasPrediction)
-          .sort((left, right) => left.nome.localeCompare(right.nome, 'pt-BR'));
-
-        everyoneRows = [...withPrediction, ...withoutPrediction];
-      }
-
-      setMatch(foundMatch);
-      setPrediction(foundPrediction);
-      setEveryonePredictions(everyoneRows);
-      setIsEditing(false);
-      setHomeScore(foundPrediction ? String(foundPrediction.home_score) : '0');
-      setAwayScore(foundPrediction ? String(foundPrediction.away_score) : '0');
-    } catch (error) {
-      const message =
-        error && typeof error === 'object' && 'message' in error
-          ? String(error.message)
-          : 'Nao foi possivel carregar os detalhes deste jogo.';
-      setErrorMessage(message);
-      setMatch(null);
-      setPrediction(null);
-      setEveryonePredictions([]);
-    } finally {
-      setLoading(false);
+    if (
+      contextPrediction.home_score === optimisticPrediction.home_score &&
+      contextPrediction.away_score === optimisticPrediction.away_score
+    ) {
+      setOptimisticPrediction(null);
     }
-  }, [matchId, user]);
+  }, [contextPrediction, matchId, optimisticPrediction]);
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    if (isEditing) {
+      return;
+    }
+
+    setHomeScore(prediction ? String(prediction.home_score) : '0');
+    setAwayScore(prediction ? String(prediction.away_score) : '0');
+  }, [isEditing, prediction]);
+
+  useEffect(() => {
+    let isCurrent = true;
+
+    setEveryonePredictions([]);
+
+    if (match?.status !== 'finalizado') {
+      return () => {
+        isCurrent = false;
+      };
+    }
+
+    void getEveryonePredictions(matchId)
+      .then((rows) => {
+        if (isCurrent) {
+          setEveryonePredictions(rows);
+        }
+      })
+      .catch((error) => {
+        if (isCurrent) {
+          setDetailErrorMessage(errorToMessage(error));
+        }
+      });
+
+    return () => {
+      isCurrent = false;
+    };
+  }, [match?.status, matchId]);
 
   const now = Date.now();
   const matchDeadline = match ? getMatchDeadline(match.match_time) : null;
@@ -277,25 +318,26 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
 
   const savePrediction = async () => {
     if (!match || bettingClosed) {
-      setErrorMessage('Esse jogo nao aceita novos palpites agora.');
+      setDetailErrorMessage('Esse jogo nao aceita novos palpites agora.');
       return;
     }
 
     setSaving(true);
-    setErrorMessage(null);
+    setDetailErrorMessage(null);
     setSuccessMessage(null);
 
     try {
       const nextPrediction = await upsertPrediction(match.id, Number(homeScore), Number(awayScore));
-      setPrediction(nextPrediction);
+      setOptimisticPrediction(nextPrediction);
       setIsEditing(false);
       setSuccessMessage('Palpite salvo com sucesso.');
+      void refetchAll();
     } catch (error) {
       const message =
         error && typeof error === 'object' && 'message' in error
           ? String(error.message)
           : 'Nao foi possivel salvar seu palpite.';
-      setErrorMessage(message);
+      setDetailErrorMessage(message);
     } finally {
       setSaving(false);
     }
@@ -308,10 +350,11 @@ export default function MatchDetail({ matchId }: MatchDetailProps) {
           ← Voltar
         </a>
 
-        {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
+        {appDataErrorMessage ? <FeedbackBanner message={appDataErrorMessage} tone="error" /> : null}
+        {detailErrorMessage ? <FeedbackBanner message={detailErrorMessage} tone="error" /> : null}
         {successMessage ? <FeedbackBanner message={successMessage} tone="success" /> : null}
 
-        {loading ? (
+        {isInitialLoading ? (
           <div className="rounded-[16px] border border-[#E0E0E0] bg-white p-10 text-center text-sm text-zinc-600 dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300">
             Carregando jogo...
           </div>

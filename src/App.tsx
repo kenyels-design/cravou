@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { AppDataProvider } from './context/AppDataContext';
 import { ThemeProvider } from './context/ThemeContext';
 import { ToastProvider } from './context/ToastContext';
 import BottomNavigation from './components/BottomNavigation';
@@ -224,7 +225,9 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <ToastProvider>
-          <AppRouter />
+          <AppDataProvider>
+            <AppRouter />
+          </AppDataProvider>
         </ToastProvider>
       </AuthProvider>
     </ThemeProvider>

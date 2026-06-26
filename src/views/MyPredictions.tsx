@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
-import { getMyPredictions } from '../lib/matches';
+import { useAppData } from '../context/AppDataContext';
 import type { Sprint3PredictionWithMatchRecord } from '../lib/matches';
 
 type PredictionFilter = 'todos' | 'acertos' | 'erros' | 'pendente';
@@ -67,33 +67,8 @@ function cardClass(prediction: Sprint3PredictionWithMatchRecord) {
 }
 
 export default function MyPredictions() {
-  const [predictions, setPredictions] = useState<Sprint3PredictionWithMatchRecord[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const { predictions, isInitialLoading, errorMessage } = useAppData();
   const [activeFilter, setActiveFilter] = useState<PredictionFilter>('todos');
-
-  const loadPredictions = useCallback(async () => {
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const rows = await getMyPredictions();
-      setPredictions(rows);
-    } catch (error) {
-      const message =
-        error && typeof error === 'object' && 'message' in error
-          ? String(error.message)
-          : 'Nao foi possivel carregar seus palpites agora.';
-      setErrorMessage(message);
-      setPredictions([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    void loadPredictions();
-  }, [loadPredictions]);
 
   const safePredictions = useMemo(
     () =>
@@ -172,7 +147,7 @@ export default function MyPredictions() {
 
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
 
-        {loading ? (
+        {isInitialLoading ? (
           <div className="rounded-[16px] border border-[#D0D0D8] bg-white p-10 text-center text-sm text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300 dark:shadow-none">
             Carregando seus palpites...
           </div>

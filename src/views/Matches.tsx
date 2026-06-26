@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import QuickBetMode from '../components/QuickBetMode';
 import { FeedbackBanner } from '../components/ui/FeedbackBanner';
-import { useAuth } from '../context/AuthContext';
+import { useAppData } from '../context/AppDataContext';
 import { formatMatchKickoff, formatMatchKickoffTime, getFlagCode } from '../lib/display';
-import { getMatches, getMyPredictions } from '../lib/matches';
 import type { Sprint3MatchRecord, Sprint3MatchStatus, Sprint3PredictionRecord } from '../lib/types';
 
 type MatchFilter = 'todos' | 'ao_vivo' | 'pendente' | 'finalizado' | 'sem_palpite';
@@ -146,49 +145,16 @@ function matchClosingLabel(deadline: number | null, now: number) {
 }
 
 export default function Matches() {
-  const { user } = useAuth();
-  const [matches, setMatches] = useState<Sprint3MatchRecord[]>([]);
-  const [predictions, setPredictions] = useState<Record<string, Sprint3PredictionRecord>>({});
+  const {
+    matches,
+    predictions: predictionRows,
+    isInitialLoading,
+    errorMessage,
+    refetchAll,
+  } = useAppData();
   const [quickBetMatches, setQuickBetMatches] = useState<Sprint3MatchRecord[] | null>(null);
-  const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState<MatchFilter>('todos');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
-
-  const loadData = useCallback(async () => {
-    if (!user) {
-      return;
-    }
-
-    setLoading(true);
-    setErrorMessage(null);
-
-    try {
-      const [matchRows, predictionRows] = await Promise.all([getMatches(), getMyPredictions()]);
-
-      setMatches(matchRows);
-      setPredictions(
-        predictionRows.reduce<Record<string, Sprint3PredictionRecord>>((accumulator, prediction) => {
-          accumulator[prediction.match_id] = prediction;
-          return accumulator;
-        }, {}),
-      );
-    } catch (error) {
-      const message =
-        error && typeof error === 'object' && 'message' in error
-          ? String(error.message)
-          : 'Nao foi possivel carregar os jogos agora.';
-      setErrorMessage(message);
-      setMatches([]);
-      setPredictions({});
-    } finally {
-      setLoading(false);
-    }
-  }, [user]);
-
-  useEffect(() => {
-    void loadData();
-  }, [loadData]);
 
   useEffect(() => {
     const interval = window.setInterval(() => {
@@ -203,6 +169,14 @@ export default function Matches() {
   const safeMatches = useMemo(
     () => (matches ?? []).filter((match): match is Sprint3MatchRecord => Boolean(match)),
     [matches],
+  );
+  const predictions = useMemo(
+    () =>
+      predictionRows.reduce<Record<string, Sprint3PredictionRecord>>((accumulator, prediction) => {
+        accumulator[prediction.match_id] = prediction;
+        return accumulator;
+      }, {}),
+    [predictionRows],
   );
 
   const groupedMatches = useMemo(
@@ -268,7 +242,7 @@ export default function Matches() {
         </div>
 
         {errorMessage ? <FeedbackBanner message={errorMessage} tone="error" /> : null}
-        {loading ? (
+        {isInitialLoading ? (
           <div className="rounded-[16px] border border-[#D0D0D8] bg-white p-10 text-center text-sm text-[#555566] shadow-[0_2px_8px_rgba(0,0,0,0.08)] dark:border-[#2A2A2A] dark:bg-[#141414] dark:text-gray-300 dark:shadow-none">
             Carregando jogos e palpites...
           </div>
@@ -448,11 +422,8 @@ export default function Matches() {
         <QuickBetMode
           matches={quickBetMatches}
           onClose={() => setQuickBetMatches(null)}
-          onPredictionSaved={(prediction) => {
-            setPredictions((current) => ({
-              ...current,
-              [prediction.match_id]: prediction,
-            }));
+          onPredictionSaved={() => {
+            void refetchAll();
           }}
         />
       ) : null}
